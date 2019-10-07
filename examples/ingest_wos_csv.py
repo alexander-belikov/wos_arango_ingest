@@ -17,7 +17,8 @@ def is_int(x):
     return True
 
 
-def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, max_lines=None, verbose=True):
+def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, max_lines=None, batch_size=50000000,
+         verbose=True):
     keywords = ['refs', 'publications', 'contributors', 'institutions']
 
     files_dict = {}
@@ -27,8 +28,6 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
 
     if limit_files:
         files_dict = {k: v[:limit_files] for k, v in files_dict.items()}
-
-    batch_size = 50000000
 
     gr_name = 'wos_csv'
 
@@ -272,10 +271,6 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
         if verbose:
             print(filename)
         chk = Chunker(join(fpath, filename), batch_size, max_lines)
-        seconds = time.time()
-        nodes_time = 0
-        edges_time = 0
-
         seconds_start = time.time()
 
         while not chk.done:
@@ -332,16 +327,20 @@ if __name__ == "__main__":
                             help='login password for arangodb connection')
 
         parser.add_argument('-f', '--limit-files',
-                            default=None, type=int,
+                            default=None, type=str,
                             help='max files per type to use for ingestion')
 
         parser.add_argument('-m', '--max-lines',
-                            default=None, type=int,
+                            default=None, type=str,
                             help='max lines per file to use for ingestion')
 
         parser.add_argument('-v', '--verbose',
                             default=False, type=bool,
                             help='')
+
+        parser.add_argument('-b', '--batch-size',
+                            default=50000000, type=int,
+                            help='number of symbols read from (archived) file for a single batch')
 
         args = parser.parse_args()
 
@@ -360,5 +359,9 @@ if __name__ == "__main__":
         cred_name = args.login_name
         cred_pass = args.login_password
         verbose = args.verbose
+        batch_size = args.batch_size
 
-        main(fpath, port, cred_name, cred_pass, limit_files, max_lines, verbose)
+        if verbose:
+            print(f'max_lines : {max_lines}; limit_files: {limit_files}')
+
+        main(fpath, port, cred_name, cred_pass, limit_files, max_lines, batch_size, verbose)
