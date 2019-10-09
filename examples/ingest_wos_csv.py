@@ -68,7 +68,7 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
         organizations_col: ['organization', 'country', 'city']
     }
 
-    client = ArangoClient(protocol='http', host='localhost', port=port)
+    client = ArangoClient(host='localhost', port=port)
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
 

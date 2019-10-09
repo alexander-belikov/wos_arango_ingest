@@ -2,7 +2,7 @@ import gzip
 
 
 class Chunker:
-    def __init__(self, fname, batch_size, n_lines_max, header=True):
+    def __init__(self, fname, batch_size, n_lines_max=None):
         self.acc = []
         self.j = 0
         self.batch_size = batch_size
@@ -14,7 +14,7 @@ class Chunker:
         return self.file_obj.readline()
 
     def pop(self):
-        if self.j < self.n_lines_max:
+        if not self.n_lines_max or (self.n_lines_max and self.j < self.n_lines_max):
             lines = self.file_obj.readlines(self.batch_size)
             self.j += len(lines)
             if not lines:
