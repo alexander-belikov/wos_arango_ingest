@@ -16,7 +16,7 @@ setup(
     keywords="arangodb",
     url="git@github.com:alexander-belikov/wos_arango_ingest.git",
     packages=['wos_arango_ingest'],
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     classifiers=[
         "Development Status :: 0 - Alpha",
         "Topic :: Utilities",

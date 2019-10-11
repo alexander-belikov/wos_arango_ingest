@@ -18,35 +18,38 @@ def is_int(x):
 
 
 def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, max_lines=None, batch_size=50000000,
+         vertex_collectons=[], edge_collections=[], graph_name='wos_big',
+         modes=('refs', 'publications', 'contributors', 'institutions'),
+         clean_start=False,
          verbose=True):
-    keywords = ['refs', 'publications', 'contributors', 'institutions']
+
+    # modes = ['refs', 'publications', 'contributors', 'institutions']
 
     files_dict = {}
 
-    for keyword in keywords:
+    for keyword in modes:
         files_dict[keyword] = sorted([f for f in listdir(fpath) if isfile(join(fpath, f)) and keyword in f])
 
     if limit_files:
         files_dict = {k: v[:limit_files] for k, v in files_dict.items()}
+    pub_col, medium_col, lang_col, contributor_col, organizations_col = vertex_collectons
+    # pub_col = 'publications'
+    # medium_col = 'media'
+    # lang_col = 'languages'
+    # contributor_col = 'contributors'
+    # organizations_col = 'organizations'
 
-    gr_name = 'wos_csv'
-
-    pub_col = 'publications'
-    medium_col = 'media'
-    lang_col = 'languages'
-    contributor_col = 'contributors'
-    organizations_col = 'organizations'
-
-    # pub -> pub
-    cite_col = 'cited'
-    # pub -> medium
-    published_in_medium_col = 'published_in_medium'
-    # pub -> lang
-    published_in_lang_col = 'published_in_language'
-    # contributor -> pub
-    contributed_to_col = 'contributed_to_publication'
-    # organization -> pub
-    listed_in_col = 'listed_in_publication'
+    cite_col, published_in_medium_col, published_in_lang_col, contributed_to_col, listed_in_col = edge_collections
+    # # pub -> pub
+    # cite_col = 'cited'
+    # # pub -> medium
+    # published_in_medium_col = 'published_in_medium'
+    # # pub -> lang
+    # published_in_lang_col = 'published_in_language'
+    # # contributor -> pub
+    # contributed_to_col = 'contributed_to_publication'
+    # # organization -> pub
+    # listed_in_col = 'listed_in_publication'
 
     vertex_cols = [pub_col, medium_col, lang_col, contributor_col, organizations_col]
     edge_cols = [cite_col, published_in_lang_col, published_in_medium_col,
@@ -62,7 +65,7 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
 
     index_fields_dict = {
         pub_col: ['wosid'],
-        medium_col: ['issn', 'isbn'],
+        medium_col: ['issn', 'isbn', 'title'],
         lang_col: ['language'],
         contributor_col: ['first_name', 'last_name'],
         organizations_col: ['organization', 'country', 'city']
@@ -72,24 +75,24 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
 
-    # clean up
-    delete_collections(sys_db, vertex_cols + edge_cols, [gr_name])
+    if clean_start:
+        delete_collections(sys_db, vertex_cols + edge_cols, [graph_name])
 
-    wos = sys_db.create_graph(gr_name)
+        wos = sys_db.create_graph(graph_name)
 
-    for c in vertex_cols:
-        _ = wos.create_vertex_collection(c)
+        for c in vertex_cols:
+            _ = wos.create_vertex_collection(c)
 
-    for edge_col, uvs in edges_cols_dict.items():
-        vcol_from, vcol_to = uvs
-        published_in_medium = wos.create_edge_definition(
-            edge_collection=edge_col,
-            from_vertex_collections=[vcol_from],
-            to_vertex_collections=[vcol_to])
+        for edge_col, uvs in edges_cols_dict.items():
+            vcol_from, vcol_to = uvs
+            _ = wos.create_edge_definition(
+                edge_collection=edge_col,
+                from_vertex_collections=[vcol_from],
+                to_vertex_collections=[vcol_to])
 
-    for v_collection, index_fields in index_fields_dict.items():
-        general_collection = sys_db.collection(v_collection)
-        ih = general_collection.add_hash_index(fields=index_fields, unique=True)
+        for v_collection, index_fields in index_fields_dict.items():
+            general_collection = sys_db.collection(v_collection)
+            ih = general_collection.add_hash_index(fields=index_fields, unique=True)
 
     seconds_start0 = time.time()
 
@@ -150,7 +153,7 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
                 edges = [{'source': x, 'target': y} for x, y in zip(pubs2, media2)]
 
                 query0 = insert_edges_batch(edges, pub_col, medium_col, published_in_medium_col,
-                                            ['wosid'], ['issn', 'isbn'], False)
+                                            ['wosid'], ['issn', 'isbn', 'title'], False)
                 cursor = sys_db.aql.execute(query0)
 
                 edges2 = [{'source': x, 'target': y} for x, y in zip(pubs2, languages2) if y['language']]
@@ -342,6 +345,23 @@ if __name__ == "__main__":
                             default=50000000, type=int,
                             help='number of symbols read from (archived) file for a single batch')
 
+        parser.add_argument('--vertex-collections',
+                            nargs='*',
+                            default=['publications', 'media', 'languages', 'contributors', 'organizations'])
+
+        parser.add_argument('--edge-collections',
+                            nargs='*',
+                            default=['cited', 'published_in_medium', 'published_in_language',
+                                     'contributed_to_publication', 'listed_in_publication'])
+
+        parser.add_argument('--modes',
+                            nargs='*',
+                            default=['refs', 'publications', 'contributors', 'institutions'])
+
+        parser.add_argument('--clean-start',
+                            nargs=bool,
+                            default=False)
+
         args = parser.parse_args()
 
         if is_int(args.limit_files):
@@ -360,8 +380,13 @@ if __name__ == "__main__":
         cred_pass = args.login_password
         verbose = args.verbose
         batch_size = args.batch_size
+        v_collections = args.vertex_collections
+        e_collections = args.edge_collections
+        modes = args.modes
+        clean_start = args.clean_start
 
         if verbose:
             print(f'max_lines : {max_lines}; limit_files: {limit_files}')
 
-        main(fpath, port, cred_name, cred_pass, limit_files, max_lines, batch_size, verbose)
+        main(fpath, port, cred_name, cred_pass, limit_files, max_lines, batch_size,
+             v_collections, e_collections, modes, clean_start, verbose)

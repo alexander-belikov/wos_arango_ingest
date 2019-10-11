@@ -9,7 +9,7 @@ port = 8529
 cred_name = 'root'
 cred_pass = '123'
 
-gr_name = 'wos_csv'
+gr_name = 'wos_big'
 
 pub_col_aux = 'publications_aux'
 pub_col = 'publications'

@@ -122,7 +122,7 @@ def insert_edges_batch(docs_edges,
                               FILTER {filter_target}
                               LIMIT 1
                               RETURN v)
-                    INSERT {result}  in {edge_col_name}"""
+                    INSERT {result} in {edge_col_name}"""
     return q_update
 
 
