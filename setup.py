@@ -14,8 +14,8 @@ setup(
     description="tools to ingest csvs and jsons into arango DB",
     license="BSD",
     keywords="arangodb",
-    url="git@github.com:alexander-belikov/wos_arango_ingest.git",
-    packages=['wos_arango_ingest'],
+    url="git@github.com:alexander-belikov/wos_db_studies.git",
+    packages=['wos_db_studies'],
     long_description=read('README.md'),
     classifiers=[
         "Development Status :: 0 - Alpha",
