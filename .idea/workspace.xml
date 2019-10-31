@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="dd95ac76-09be-4379-a078-a8eae6a19bf4" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wos_arango_ingest/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/wos_db_studies/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wos_arango_ingest/chunker.py" beforeDir="false" afterPath="$PROJECT_DIR$/wos_db_studies/chunker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wos_arango_ingest/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/wos_db_studies/utils.py" afterDir="false" />
-    </list>
+    <list default="true" id="dd95ac76-09be-4379-a078-a8eae6a19bf4" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
