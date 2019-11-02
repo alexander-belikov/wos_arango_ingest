@@ -5,8 +5,8 @@ from os import listdir
 from os.path import isfile, join
 import csv
 from arango import ArangoClient
-from wos_arango_ingest.utils import delete_collections, upsert_docs_batch, insert_edges_batch, clear_first_level_nones
-from wos_arango_ingest.chunker import Chunker
+from wos_db_studies.utils import delete_collections, upsert_docs_batch, insert_edges_batch, clear_first_level_nones
+from wos_db_studies.chunker import Chunker
 
 
 fpath = expanduser('~/data/wos/wos_toy/')
@@ -76,7 +76,7 @@ index_fields_dict = {
     organizations_col: ['organization', 'country', 'city']
 }
 
-client = ArangoClient(host='localhost', port=port)
+client = ArangoClient()
 
 sys_db = client.db('_system', username=cred_name, password=cred_pass)
 

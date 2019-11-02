@@ -83,7 +83,8 @@ def upsert_docs_batch(docs, collection_name, match_keys, update_keys=None, filte
 
 
 def insert_edges_batch(docs_edges,
-                       source_collection_name, target_collection_name, edge_col_name,
+                       source_collection_name, target_collection_name,
+                       edge_col_name,
                        match_keys_source, match_keys_target,
                        filter_uniques=True):
     """

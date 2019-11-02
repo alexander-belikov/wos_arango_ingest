@@ -17,8 +17,8 @@ def is_int(x):
     return True
 
 
-def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, max_lines=None, batch_size=50000000,
-         vertex_collectons=[], edge_collections=[], graph_name='wos_big',
+def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123',
+         limit_files=None, max_lines=None, batch_size=50000000,
          modes=('publications', 'contributors', 'institutions', 'refs'),
          clean_start=False,
          verbose=True):
@@ -30,10 +30,10 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
     organizations_col = 'organizations'
 
     modes2graphs_ = {
-        'publications': ['publications-media', 'publications-languages'],
-        'contributors': ['contributors-publications'],
-        'institutions': ['organizations-publications'],
-        'refs': ['publications-publications']
+        'publications': ['publications_media', 'publications_languages'],
+        'contributors': ['contributors_publications'],
+        'institutions': ['organizations_publications'],
+        'refs': ['publications_publications']
     }
 
     modes2graphs = {k: modes2graphs_[k] for k in modes if k in modes2graphs_.keys()}
@@ -44,8 +44,8 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
     vertex_cols = []
 
     for g in graphs:
-        u, v = g.split('-')
-        graphs2triplet[g] = u, v, g + '-edges'
+        u, v = g.split('_')
+        graphs2triplet[g] = u, v, g + '_edges'
         vertex_cols += [u, v]
 
     vertex_cols = list(set(vertex_cols))
@@ -60,15 +60,15 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
         files_dict = {k: v[:limit_files] for k, v in files_dict.items()}
 
     # # # pub -> pub
-    cite_col = 'publications-publications-edges'
+    cite_col = 'publications_publications_edges'
     # # # pub -> medium
-    published_in_medium_col = 'publications-media-edges'
+    published_in_medium_col = 'publications_media_edges'
     # # # pub -> lang
-    published_in_lang_col = 'publications-languages-edges'
+    published_in_lang_col = 'publications_languages_edges'
     # # # contributor -> pub
-    contributed_to_col = 'contributors-publications-edges'
+    contributed_to_col = 'contributors_publications_edges'
     # # # organization -> pub
-    listed_in_col = 'organizations-publications-edges'
+    listed_in_col = 'organizations_publications_edges'
 
     index_fields_dict = {
         pub_col: ['wosid'],
@@ -78,18 +78,20 @@ def main(fpath, port=8529, cred_name='root', cred_pass='123', limit_files=None, 
         organizations_col: ['organization', 'country', 'city']
     }
 
-    client = ArangoClient(host='localhost', port=port)
+    hosts = f'http://{ip_addr}:{port}'
+    client = ArangoClient(hosts=hosts)
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
 
     if clean_start:
-        delete_collections(sys_db, vertex_cols + edge_cols, [graph_name])
+        delete_collections(sys_db, vertex_cols + edge_cols, graphs)
 
         for graph_name, triplet in graphs2triplet.items():
             g = sys_db.create_graph(graph_name)
             vcol_from, vcol_to, edge_col = triplet
             if not sys_db.has_collection(vcol_from):
                 _ = g.create_vertex_collection(vcol_from)
+            if not sys_db.has_collection(vcol_to):
                 _ = g.create_vertex_collection(vcol_to)
             _ = g.create_edge_definition(
                 edge_collection=edge_col,
@@ -326,6 +328,10 @@ if __name__ == "__main__":
                             default=expanduser('~/data/wos/wos_full/'),
                             help='Path to data files')
 
+        parser.add_argument('-i', '--id-addr',
+                            default='127.0.0.1', type=str,
+                            help='port for arangodb connection')
+
         parser.add_argument('-p', '--port',
                             default=8529, type=int,
                             help='port for arangodb connection')
@@ -354,6 +360,9 @@ if __name__ == "__main__":
                             default=50000000, type=int,
                             help='number of symbols read from (archived) file for a single batch')
 
+        parser.add_argument('-g', '--graph-name',
+                            default='wos_big',
+                            help='login name for arangodb connection')
 
         parser.add_argument('--modes',
                             nargs='*',
@@ -362,7 +371,6 @@ if __name__ == "__main__":
         parser.add_argument('--clean-start',
                             type=bool,
                             default=False)
-
 
         args = parser.parse_args()
 
@@ -384,8 +392,12 @@ if __name__ == "__main__":
         batch_size = args.batch_size
         modes = args.modes
         clean_start = args.clean_start
+        id_addr = args.id_addr
 
         if verbose:
             print(f'max_lines : {max_lines}; limit_files: {limit_files}')
+            print(f'modes: {modes}')
 
-        main(fpath, port, cred_name, cred_pass, limit_files, max_lines, batch_size, modes, clean_start, verbose)
+        main(fpath, port, id_addr, cred_name, cred_pass, limit_files, max_lines, batch_size,
+             modes, clean_start, verbose)
+
