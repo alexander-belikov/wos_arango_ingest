@@ -23,41 +23,38 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
          clean_start=False,
          verbose=True):
 
-    pub_col = 'publications'
-    medium_col = 'media'
-    lang_col = 'languages'
-    contributor_col = 'contributors'
-    organizations_col = 'organizations'
-
-    modes2graphs_ = {
-        'publications': ['publications_media', 'publications_languages'],
-        'contributors': ['contributors_publications'],
-        'institutions': ['organizations_publications'],
-        'refs': ['publications_publications']
+    vcollection = {
+        'pub': 'publications',
+        'medium': 'media',
+        'lang': 'languages',
+        'contributor': 'contributors',
+        'organization': 'organizations'
     }
 
-    modes2graphs = {k: modes2graphs_[k] for k in modes if k in modes2graphs_.keys()}
+    edges_def = [
+        (vcollection['pub'], vcollection['pub']),
+        (vcollection['pub'],  vcollection['medium']),
+        (vcollection['pub'], vcollection['lang']),
+        (vcollection['contributor'], vcollection['pub']),
+        (vcollection['contributor'], vcollection['organization'])
+    ]
 
-    graphs = list(set([x for sublist in modes2graphs.values() for x in sublist]))
+    graph_ids = ['pub2pub', 'pub2medium', 'pub2lang', 'contr2pub', 'contr2org']
 
-    graphs2triplet = {}
-    vertex_cols = []
+    graph = {}
+    for uv, g in zip(edges_def, graph_ids):
+        u, v = uv
+        graph_name = f'{u}_{v}_graph'
+        ecollection_name = f'{u}_{v}_edges'
+        graph[g] = u, v, ecollection_name, graph_name
 
-    for g in graphs:
-        u, v = g.split('_')
-        graphs2triplet[g] = u, v, g + '_edges'
-        vertex_cols += [u, v]
-
-    vertex_cols = list(set(vertex_cols))
-    edge_cols = [x for _, _, x in graphs2triplet.values()]
-
-    files_dict = {}
-
-    for keyword in modes:
-        files_dict[keyword] = sorted([f for f in listdir(fpath) if isfile(join(fpath, f)) and keyword in f])
-
-    if limit_files:
-        files_dict = {k: v[:limit_files] for k, v in files_dict.items()}
+    index_fields_dict = {
+        vcollection['pub']: ['wosid'],
+        vcollection['medium']: ['issn', 'isbn', 'title'],
+        vcollection['lang']: ['language'],
+        vcollection['contributor']: ['first_name', 'last_name'],
+        vcollection['organizations']: ['organization', 'country', 'city']
+    }
 
     # # # pub -> pub
     cite_col = 'publications_publications_edges'
@@ -70,13 +67,35 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
     # # # organization -> pub
     listed_in_col = 'organizations_publications_edges'
 
-    index_fields_dict = {
-        pub_col: ['wosid'],
-        medium_col: ['issn', 'isbn', 'title'],
-        lang_col: ['language'],
-        contributor_col: ['first_name', 'last_name'],
-        organizations_col: ['organization', 'country', 'city']
-    }
+    # modes2graphs_ = {
+    #     'publications': ['publications_media', 'publications_languages'],
+    #     'contributors': ['contributors_publications'],
+    #     'institutions': ['organizations_publications'],
+    #     'refs': ['publications_publications']
+    # }
+    #
+    # modes2graphs = {k: modes2graphs_[k] for k in modes if k in modes2graphs_.keys()}
+    #
+    # graphs = list(set([x for sublist in modes2graphs.values() for x in sublist]))
+    #
+    # graphs2triplet = {}
+    # vertex_cols = []
+    #
+    # for g in graphs:
+    #     u, v = g.split('_')
+    #     graphs2triplet[g] = u, v, g + '_edges'
+    #     vertex_cols += [u, v]
+    #
+    # vertex_cols = list(set(vertex_cols))
+    # edge_cols = [x for _, _, x in graphs2triplet.values()]
+
+    files_dict = {}
+
+    for keyword in modes:
+        files_dict[keyword] = sorted([f for f in listdir(fpath) if isfile(join(fpath, f)) and keyword in f])
+
+    if limit_files:
+        files_dict = {k: v[:limit_files] for k, v in files_dict.items()}
 
     hosts = f'http://{ip_addr}:{port}'
     client = ArangoClient(hosts=hosts)
@@ -145,7 +164,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
                     seconds0 = time.time()
 
-                    query0 = upsert_docs_batch(pubs2, pub_col, ['wosid'], 'doc', True)
+                    query0 = upsert_docs_batch(pubs2, vcollection['pub'], ['wosid'], 'doc', True)
                     cursor = sys_db.aql.execute(query0)
 
                     query0 = upsert_docs_batch(media2, medium_col, ['issn', 'isbn', 'title'], 'doc', True)
@@ -160,13 +179,13 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
                     edges = [{'source': x, 'target': y} for x, y in zip(pubs2, media2)]
 
-                    query0 = insert_edges_batch(edges, pub_col, medium_col, published_in_medium_col,
+                    query0 = insert_edges_batch(edges, vcollection['pub'], medium_col, published_in_medium_col,
                                                 ['wosid'], ['issn', 'isbn', 'title'], False)
                     cursor = sys_db.aql.execute(query0)
 
                     edges2 = [{'source': x, 'target': y} for x, y in zip(pubs2, languages2) if y['language']]
 
-                    query0 = insert_edges_batch(edges2, pub_col, lang_col, published_in_lang_col,
+                    query0 = insert_edges_batch(edges2, vcollection['pub'], lang_col, published_in_lang_col,
                                                 ['wosid'], ['language'], False)
                     cursor = sys_db.aql.execute(query0)
 
@@ -203,7 +222,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
                     seconds0 = time.time()
 
-                    query0 = upsert_docs_batch(pubs2, pub_col, ['wosid'], 'doc', True)
+                    query0 = upsert_docs_batch(pubs2, vcollection['pub'], ['wosid'], 'doc', True)
                     cursor = sys_db.aql.execute(query0)
 
                     query0 = upsert_docs_batch(contrs2, contributor_col, ['last_name', 'first_name'], 'doc', True)
@@ -216,7 +235,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
                     edges = [{'source': x, 'target': y, 'attributes': {'position': int(item[header_dict['position']])}}
                              for x, y, item in zip(contrs2, pubs2, lines2)]
 
-                    query0 = insert_edges_batch(edges, contributor_col, pub_col, contributed_to_col,
+                    query0 = insert_edges_batch(edges, contributor_col, vcollection['pub'], contributed_to_col,
                                                 ['last_name', 'first_name'], ['wosid'], False)
                     cursor = sys_db.aql.execute(query0)
 
@@ -255,7 +274,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
                     seconds0 = time.time()
 
-                    query0 = upsert_docs_batch(pubs2, pub_col, ['wosid'], 'doc', True)
+                    query0 = upsert_docs_batch(pubs2, vcollection['pub'], ['wosid'], 'doc', True)
                     cursor = sys_db.aql.execute(query0)
 
                     query0 = upsert_docs_batch(orgs2, organizations_col, ['organization', 'country', 'city'], 'doc', True)
@@ -268,7 +287,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
                     edges = [{'source': x, 'target': y, 'attributes': {'position': item[header_dict['addr_num']]}}
                              for x, y, item in zip(orgs2, pubs2, lines2)]
 
-                    query0 = insert_edges_batch(edges, organizations_col, pub_col, listed_in_col,
+                    query0 = insert_edges_batch(edges, organizations_col, vcollection['pub'], listed_in_col,
                                                 ['organization', 'country', 'city'], ['wosid'], False)
                     cursor = sys_db.aql.execute(query0)
 
@@ -300,7 +319,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
                     pubs_u = clear_first_level_nones(pubs_u)
                     pubs = pubs_u + pubs_w
 
-                    query0 = upsert_docs_batch(pubs, pub_col, ['wosid'], 'doc', True)
+                    query0 = upsert_docs_batch(pubs, vcollection['pub'], ['wosid'], 'doc', True)
                     cursor = sys_db.aql.execute(query0)
 
                     seconds2 = time.time()
@@ -309,7 +328,8 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
                     edges_ = [{'source': x, 'target': y} for x, y in zip(pubs_w, pubs_u)]
 
-                    query0 = insert_edges_batch(edges_, pub_col, pub_col, cite_col, ['wosid'], ['wosid'], False)
+                    query0 = insert_edges_batch(edges_, vcollection['pub'], vcollection['pub'],
+                                                cite_col, ['wosid'], ['wosid'], False)
                     cursor = sys_db.aql.execute(query0)
 
                     seconds3 = time.time()
@@ -397,7 +417,11 @@ if __name__ == "__main__":
         if verbose:
             print(f'max_lines : {max_lines}; limit_files: {limit_files}')
             print(f'modes: {modes}')
+            print(f'clean start: {clean_start}')
 
-        main(fpath, port, id_addr, cred_name, cred_pass, limit_files, max_lines, batch_size,
-             modes, clean_start, verbose)
+        main(fpath, port, id_addr, cred_name, cred_pass,
+             limit_files, max_lines, batch_size,
+             modes,
+             clean_start,
+             verbose)
 
