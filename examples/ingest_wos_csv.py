@@ -56,16 +56,16 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
         vcollection['organizations']: ['organization', 'country', 'city']
     }
 
-    # # # pub -> pub
-    cite_col = 'publications_publications_edges'
-    # # # pub -> medium
-    published_in_medium_col = 'publications_media_edges'
-    # # # pub -> lang
-    published_in_lang_col = 'publications_languages_edges'
-    # # # contributor -> pub
-    contributed_to_col = 'contributors_publications_edges'
-    # # # organization -> pub
-    listed_in_col = 'organizations_publications_edges'
+    # # # # pub -> pub
+    # cite_col = 'publications_publications_edges'
+    # # # # pub -> medium
+    # published_in_medium_col = 'publications_media_edges'
+    # # # # pub -> lang
+    # published_in_lang_col = 'publications_languages_edges'
+    # # # # contributor -> pub
+    # contributed_to_col = 'contributors_publications_edges'
+    # # # # organization -> pub
+    # listed_in_col = 'organizations_publications_edges'
 
     # modes2graphs_ = {
     #     'publications': ['publications_media', 'publications_languages'],
