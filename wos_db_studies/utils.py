@@ -54,12 +54,21 @@ def fetch_collection(sys_db, collection_name, erase_existing=False):
     return collection
 
 
-def clear_first_level_nones(docs):
-    docs = [{k: v for k, v in tdict.items() if v} for tdict in docs]
+def clear_first_level_nones(docs, keys_keep_nones=None):
+    docs = [{k: v for k, v in tdict.items() if v or k in keys_keep_nones} for tdict in docs]
     return docs
 
 
 def upsert_docs_batch(docs, collection_name, match_keys, update_keys=None, filter_uniques=True):
+    """
+
+    :param docs: list of dictionaries (json-like, ie keys are strings)
+    :param collection_name: collection where to upsert
+    :param match_keys: keys on which to look for document
+    :param update_keys: keys which to update if doc in the collection, if update_keys='doc', update all
+    :param filter_uniques:
+    :return:
+    """
 
     if isinstance(docs, list):
         if filter_uniques:
@@ -68,6 +77,7 @@ def upsert_docs_batch(docs, collection_name, match_keys, update_keys=None, filte
         docs = json.dumps(docs)
     upsert_line = ', '.join([f'\"{k}\": doc.{k}' for k in match_keys])
     upsert_line = f'{{{upsert_line}}}'
+
     if isinstance(update_keys, list):
         update_line = ', '.join([f'\"{k}\": doc.{k}' for k in update_keys])
         update_line = f'{{{update_line}}}'
@@ -85,7 +95,7 @@ def upsert_docs_batch(docs, collection_name, match_keys, update_keys=None, filte
 def insert_edges_batch(docs_edges,
                        source_collection_name, target_collection_name,
                        edge_col_name,
-                       match_keys_source, match_keys_target,
+                       match_keys_source=('_key', ), match_keys_target=('_key', ),
                        filter_uniques=True):
     """
 
@@ -93,6 +103,9 @@ def insert_edges_batch(docs_edges,
     :param source_collection_name,
     :param target_collection_name,
     :param edge_col_name:
+    :param match_keys_source:
+    :param match_keys_target:
+
     :return:
     """
     example = docs_edges[0]
@@ -102,28 +115,38 @@ def insert_edges_batch(docs_edges,
             docs_edges = [json.loads(t) for t in docs_edges]
         docs_edges = json.dumps(docs_edges)
 
-    filter_source = ' && '.join([f'v.{k} == edge.source.{k}' for k in match_keys_source])
+    if match_keys_source[0] == '_key':
+        result_from = f'CONCAT("{target_collection_name}/", edge.source._key)'
+        source_filter = ''
+    else:
+        result_from = 'sources[0]._id'
+        filter_source = ' && '.join([f'v.{k} == edge.source.{k}' for k in match_keys_source])
+        source_filter = f"""
+                            LET sources = (
+                                FOR v IN {source_collection_name}
+                                  FILTER {filter_source} LIMIT 1
+                                  RETURN v)"""
 
-    filter_target = ' && '.join([f'v.{k} == edge.target.{k}' for k in match_keys_target])
+    if match_keys_target[0] == '_key':
+        result_to = f'CONCAT("{target_collection_name}/", edge.target._key)'
+        target_filter = ''
+    else:
+        result_to = 'targets[0]._id'
+        filter_target = ' && '.join([f'v.{k} == edge.target.{k}' for k in match_keys_target])
+        target_filter = f"""
+                            LET targets = (
+                                FOR v IN {target_collection_name}
+                                  FILTER {filter_target} LIMIT 1
+                                  RETURN v)"""
 
     if 'attributes' in example.keys():
-        result = 'MERGE({_from : sources[0]._id , _to : targets[0]._id}, edge.attributes)'
-        # print(result)
+        result = f'MERGE({{_from : {result_from}, _to : {result_to}}}, edge.attributes)'
     else:
-        result = '{_from : sources[0]._id , _to : targets[0]._id}'
+        result = f'{{_from : {result_from}, _to : {result_to}}}'
 
-    q_update = f"""FOR edge in {docs_edges}
-                        LET sources = (
-                            FOR v IN {source_collection_name}
-                              FILTER {filter_source}
-                              LIMIT 1
-                              RETURN v)
-                        LET targets = (
-                            FOR v IN {target_collection_name}
-                              FILTER {filter_target}
-                              LIMIT 1
-                              RETURN v)
-                    INSERT {result} in {edge_col_name}"""
+    q_update = f"""
+        FOR edge in {docs_edges} {source_filter} {target_filter}
+            INSERT {result} in {edge_col_name}"""
     return q_update
 
 

@@ -14,7 +14,7 @@ class Chunker:
         self.done = False
 
     def pop_header(self):
-        return self.file_obj.readline()
+        return self.file_obj.readline().rstrip('\n')
 
     def pop(self):
         if not self.n_lines_max or (self.n_lines_max and self.j < self.n_lines_max):
