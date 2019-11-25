@@ -116,7 +116,7 @@ def insert_edges_batch(docs_edges,
         docs_edges = json.dumps(docs_edges)
 
     if match_keys_source[0] == '_key':
-        result_from = f'CONCAT("{target_collection_name}/", edge.source._key)'
+        result_from = f'CONCAT("{source_collection_name}/", edge.source._key)'
         source_filter = ''
     else:
         result_from = 'sources[0]._id'

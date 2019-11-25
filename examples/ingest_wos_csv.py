@@ -174,7 +174,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
                 lines = chk.pop()
                 if lines:
                     lines2 = [next(csv.reader([line.rstrip()],
-                                              skipinitialspace=True)) for line in lines][:]
+                                              skipinitialspace=True)) for line in lines]
 
                     for g in modes2graphs[mode]:
 
@@ -302,7 +302,7 @@ if __name__ == "__main__":
                         help='verbosity level')
 
     parser.add_argument('-b', '--batch-size',
-                        default=50000000, type=int,
+                        default=500000, type=int,
                         help='number of symbols read from (archived) file for a single batch')
 
     parser.add_argument('--prefix',
