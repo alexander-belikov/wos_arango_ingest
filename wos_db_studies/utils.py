@@ -150,80 +150,15 @@ def insert_edges_batch(docs_edges,
     return q_update
 
 
-def import_graph_from_csv(sys_db, file_path, collections_dict, edges, batch_size=100000, n_batches_test=10,
-                          header=True, index_col=0, sep=',', extra_attr=None):
-    """
+def profile_query_save_results(query, port=8529, ip_addr='127.0.0.1',
+                               cred_name='root', cred_pass='123',
+                               profile=False):
+    hosts = f'http://{ip_addr}:{port}'
+    client = ArangoClient(hosts=hosts)
 
-    :param file_path:
-    :param collections_dict: {i: collection_name}
-    :param batch_size:
-    :param n_batches_test:
-    :param header:
-    :param extra_attr: {i: extra_attr_dict}
-        e.g. {1: 'wid', 2: 'uid'}
-    :return:
-    """
+    sys_db = client.db('_system', username=cred_name, password=cred_pass)
+    cursor = sys_db.aql.execute(query, profile=profile)
 
-    # collections_dict_inv = {v: k for k, v in collections_dict.items()}
-    columns_of_interest = sorted(collections_dict.keys())
-    collections_of_interest = list(collections_dict.values())
-    collection_aux = {c: f'{c}_aux' for c in collections_of_interest}
-    cs = {col: fetch_collection(sys_db, col) for col in collections_of_interest}
-    cs_aux = {col: fetch_collection(sys_db, col, True) for col in collection_aux}
+    return cursor
 
-    with gzip.open(file_path, 'rt') as f:
 
-        cnt = 0
-        n_batches = 0
-        acc = []
-        set_accum = dict()
-        collection_accum = dict()
-        reports = []
-
-        if header:
-            first = f.readline()
-            print(first)
-
-        for line in f:
-            cnt += 1
-            row = line.rstrip().split(sep)
-            acc.append(row)
-
-            if cnt == batch_size:
-                for ix in columns_of_interest:
-                    set_accum[ix] = set((x[ix] for x in acc))
-
-                for ix in columns_of_interest:
-                    collection_accum[ix] = [{columns_of_interest[ix]: x, 'extra': extra_attr[ix]}
-                                            for x in set_accum[ix]]
-
-                for ix, collection_name in columns_of_interest.items():
-                    # print(f'sending vertices; n vertices {len(wids_candidates)}')
-                    collection_aux = cs_aux[collection_aux[collection_name]]
-                    report = collection_aux.import_bulk(collection_accum[ix],
-                                                        False)
-
-                    ih = collection_aux.add_hash_index(fields=[columns_of_interest[ix]], unique=False)
-                    query0 = f"""
-                        FOR doc IN {collection_aux[collection_name]} 
-                            COLLECT wid = doc.wid INTO 
-                                g = {{"_id" : doc._id, "extra": doc.id_source, "{collection_name}": doc.wid}}
-                            LET names = (
-                                FOR value IN g[*] SORT value.id_source DESC LIMIT 1 
-                                    RETURN {{"_id" : value._id, "{collection_name}" : value.{collection_name}}}
-                                    )
-                            INSERT MERGE(DOCUMENT(names[0]._id), {{_key : names[0].{collection_name}}}) 
-                                INTO {collection_name}
-                        """
-
-                    cursor = sys_db.aql.execute(query0)
-
-                reports.append(report)
-                seconds2 = time.time()
-                n_batches += 1
-                print(f'{n_batches * batch_size} iterations {seconds2 - seconds:.1f} sec passed')
-                cnt = 0
-                acc = []
-                cs_aux = {col: fetch_collection(sys_db, col, True) for col in collection_aux}
-            if n_batches > n_batches_test:
-                break

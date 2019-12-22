@@ -9,6 +9,7 @@ from wos_db_studies.utils import delete_collections, upsert_docs_batch, insert_e
 from wos_db_studies.chunker import Chunker
 from pprint import pprint
 
+
 def is_int(x):
     try:
         int(x)

@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dd95ac76-09be-4379-a078-a8eae6a19bf4" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/examples/arango/query1.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/ingest_wos_csv.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/ingest_wos_csv.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/delete_collections.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/delete_collections.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/ingest_wos_csv.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/ingest_wos_csv.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/wos_db_studies/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/wos_db_studies/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -23,7 +25,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/examples/ingest_wos_csv.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/examples/arango/ingest_wos_csv.py" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="IgnoredFileRootStore">
     <option name="generatedRoots">
@@ -42,6 +44,11 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples/arango" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
