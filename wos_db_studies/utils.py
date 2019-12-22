@@ -150,15 +150,23 @@ def insert_edges_batch(docs_edges,
     return q_update
 
 
-def profile_query_save_results(query, port=8529, ip_addr='127.0.0.1',
-                               cred_name='root', cred_pass='123',
-                               profile=False):
+def basic_query(query, port=8529, ip_addr='127.0.0.1',
+                cred_name='root', cred_pass='123',
+                profile=False):
     hosts = f'http://{ip_addr}:{port}'
     client = ArangoClient(hosts=hosts)
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
     cursor = sys_db.aql.execute(query, profile=profile)
-
     return cursor
 
+
+def profile_query(query, nq, profile_times, fpath, **kwargs):
+    profiling = [basic_query(query, profile=True, **kwargs).profile() for n in range(profile_times)]
+    with open(join(fpath, f'query{nq}_profile.json'), 'w') as fp:
+        json.dump(profiling, fp, indent=4)
+
+    qr = list(basic_query(query, **kwargs).batch())
+    with open(join(fpath, f'query{nq}_result.json'), 'w') as fp:
+        json.dump(qr, fp, indent=4)
 

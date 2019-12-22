@@ -1,7 +1,7 @@
-from wos_db_studies.utils import profile_query_save_results
-import json
+from wos_db_studies.utils import profile_query
 
 n_profile = 3
+nq = 1
 
 q = f"""
 LET cnts =
@@ -15,11 +15,7 @@ FOR doc in cnts
     LIMIT 10
 RETURN doc"""
 
-profiling = [profile_query_save_results(q, profile=True).profile() for n in range(n_profile)]
-with open('./../../results/query1_profile.json', 'w') as fp:
-    json.dump(profiling, fp, indent=4)
+fpath = './../../results/'
 
-qr = profile_query_save_results(q)
-with open('./../../results/query1_result.json', 'w') as fp:
-    json.dump(qr, fp, indent=4)
 
+profile_query(q, nq, n_profile, fpath)
