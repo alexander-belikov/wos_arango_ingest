@@ -14,8 +14,8 @@ else:
 q = f"""
 LET cnts = (
     FOR p IN publications {limit_str}
-        LET first = (FOR c IN 1..1 OUTBOUND p publications_publications_edges RETURN c._id)
-        LET second = (FOR c IN 2..2 OUTBOUND p publications_publications_edges RETURN DISTINCT c._id)
+        LET first = (FOR c IN 1..1 INBOUND p publications_publications_edges RETURN c._id)
+        LET second = (FOR c IN 2..2 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
         RETURN {{pub: p._id, fa: LENGTH(first), fb: LENGTH(second)}}
         )
      return cnts"""
