@@ -11,13 +11,21 @@ FOR p IN toy_publications
 """
 
 n_profile = 3
-nq = 1
+nq = 3
 
-q = """
-FOR a IN contributors
+test = False
+test = True
+
+if test:
+    limit_str = 'LIMIT 1000'
+else:
+    limit_str = ''
+
+q = f"""
+FOR a IN contributors {limit_str}
     LET times = LENGTH(FOR org IN 1..1 OUTBOUND a contributors_organizations_edges 
     RETURN DISTINCT org.country) FILTER times > 2 
-    RETURN MERGE(a, {'cnt': times})"""
+    RETURN MERGE(a, {{'cnt': times}})"""
 
 fpath = './../../results/'
 
