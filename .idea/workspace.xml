@@ -3,10 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="dd95ac76-09be-4379-a078-a8eae6a19bf4" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/query1_result.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/query4_profile_limit_{limit}.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/query4_result_limit_{limit}.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/wos_db_studies/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/wos_db_studies/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/arango/query1.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/query1.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

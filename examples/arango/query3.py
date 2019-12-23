@@ -15,6 +15,7 @@ FOR p IN publications
 test = False
 # test = True
 nq = 4
+fpath = './../../results/'
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -50,9 +51,10 @@ else:
 
 print(limits)
 for limit in limits:
-    fpath = './../../results/'
-    q = q0.replace('_insert_limit', f'LIMIT {limit}')
-    print(q)
+    if limit:
+        q = q0.replace('_insert_limit', f'LIMIT {limit}')
+    else:
+        q = q0.replace('_insert_limit', f'')
     profile_query(q, nq, n_profile, fpath, limit)
 
 
