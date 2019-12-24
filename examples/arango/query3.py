@@ -42,7 +42,7 @@ FOR a IN contributors _insert_limit
 
 n_profile = 3
 
-orders = np.arange(1, order_max, 1)
+orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
 if test:
     limits = [100, 1000]
