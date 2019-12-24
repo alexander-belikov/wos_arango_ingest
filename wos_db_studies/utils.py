@@ -157,7 +157,7 @@ def basic_query(query, port=8529, ip_addr='127.0.0.1',
     client = ArangoClient(hosts=hosts)
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
-    cursor = sys_db.aql.execute(query, profile=profile)
+    cursor = sys_db.aql.execute(query, profile=profile, stream=True)
     return cursor
 
 
@@ -171,6 +171,6 @@ def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
 
     print(f'starting profiling: {limit}')
     qr = list(basic_query(query, **kwargs).batch())
-    with open(join(fpath, f'query{nq}_result{limit_str}.json'), 'w') as fp:
+    with gzip.open(join(fpath, f'query{nq}_result{limit_str}.json'), 'wt', encoding="ascii") as fp:
         json.dump(qr, fp, indent=4)
 
