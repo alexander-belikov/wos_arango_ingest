@@ -3,8 +3,9 @@ from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
 test = False
-test = True
+# test = True
 nq = 4
+fpath = './../../results/'
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -25,11 +26,13 @@ order_max = int(np.log(n)/np.log(10))
 q0 = f"""
 LET cnts = (
     FOR p IN publications _insert_limit
-        LET first = (FOR c IN 1..1 INBOUND p publications_publications_edges RETURN c._id)
-        LET second = (FOR c IN 2..2 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
-        RETURN {{pub: p._id, fa: LENGTH(first), fb: LENGTH(second)}}
+        LET first = (FOR c IN 1 INBOUND p publications_publications_edges RETURN c._id)
+        LET second = (FOR c IN 2 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
+        FILTER LENGTH(first) > 0
+        RETURN {{pub: p._id, f: LENGTH(second)/LENGTH(first), na: LENGTH(first)}}
         )
-     return cnts"""
+FOR pub in cnts SORT pub.f DESC LIMIT 100
+return pub"""
 
 
 n_profile = 3
@@ -43,8 +46,8 @@ else:
 
 print(limits)
 for limit in limits:
-    fpath = './../../results/'
-    q = q0.replace('_insert_limit', f'LIMIT {limit}')
-    print(q)
+    if limit:
+        q = q0.replace('_insert_limit', f'LIMIT {limit}')
+    else:
+        q = q0.replace('_insert_limit', f'')
     profile_query(q, nq, n_profile, fpath, limit)
-

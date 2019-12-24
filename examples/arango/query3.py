@@ -14,7 +14,7 @@ FOR p IN publications
 
 test = False
 # test = True
-nq = 4
+nq = 3
 fpath = './../../results/'
 
 port = 8529
