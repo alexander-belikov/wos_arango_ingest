@@ -171,6 +171,6 @@ def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
 
     print(f'starting profiling: {limit}')
     qr = list(basic_query(query, **kwargs).batch())
-    with gzip.open(join(fpath, f'query{nq}_result{limit_str}.json'), 'wt', encoding="ascii") as fp:
+    with gzip.open(join(fpath, f'query{nq}_result{limit_str}.json.gz'), 'wt', encoding="ascii") as fp:
         json.dump(qr, fp, indent=4)
 
