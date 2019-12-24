@@ -152,22 +152,23 @@ def insert_edges_batch(docs_edges,
 
 def basic_query(query, port=8529, ip_addr='127.0.0.1',
                 cred_name='root', cred_pass='123',
-                profile=False):
+                profile=False,
+                batch_size=10000):
     hosts = f'http://{ip_addr}:{port}'
     client = ArangoClient(hosts=hosts)
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
-    cursor = sys_db.aql.execute(query, profile=profile, stream=True)
+    cursor = sys_db.aql.execute(query, profile=profile, stream=True, batch_size=10000)
     return cursor
 
 
-def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
+def profile_query(query, nq, profile_times, fpath, limit=None, profile=False, **kwargs):
     limit_str = f'_limit_{limit}' if limit else ''
-
-    print(f'starting profiling: {limit}')
-    profiling = [basic_query(query, profile=True, **kwargs).profile() for n in range(profile_times)]
-    with open(join(fpath, f'query{nq}_profile{limit_str}.json'), 'w') as fp:
-        json.dump(profiling, fp, indent=4)
+    if profile:
+        print(f'starting profiling: {limit}')
+        profiling = [basic_query(query, profile=True, **kwargs).profile() for n in range(profile_times)]
+        with open(join(fpath, f'query{nq}_profile{limit_str}.json'), 'w') as fp:
+            json.dump(profiling, fp, indent=4)
 
     print(f'starting profiling: {limit}')
     qr = list(basic_query(query, **kwargs).batch())

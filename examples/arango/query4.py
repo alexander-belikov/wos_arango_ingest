@@ -4,6 +4,7 @@ from wos_db_studies.utils import profile_query
 
 test = False
 # test = True
+# profile = True
 nq = 4
 fpath = './../../results/'
 
