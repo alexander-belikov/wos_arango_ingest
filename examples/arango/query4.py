@@ -27,8 +27,8 @@ order_max = int(np.log(n)/np.log(10))
 q0 = f"""
 FOR pub IN publications _insert_limit
     LET first = (FOR c IN 1 INBOUND pub publications_publications_edges RETURN c._id)
-    LET second = (FOR c IN 2 INBOUND pub publications_publications_edges RETURN DISTINCT c._id)
     FILTER LENGTH(first) > 0
+    LET second = (FOR c IN 2 INBOUND pub publications_publications_edges RETURN DISTINCT c._id)
     LET result = {{'pub': pub._key, na: LENGTH(first), 
                     nb: LENGTH(second), f: LENGTH(second)/LENGTH(first)}}
     FILTER result.f > 5.0
@@ -38,7 +38,7 @@ FOR pub IN publications _insert_limit
 """
 
 
-n_profile = 3
+n_profile = 2
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
