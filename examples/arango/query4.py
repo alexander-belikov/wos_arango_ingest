@@ -6,7 +6,7 @@ test = False
 # test = True
 profile = True
 nq = 4
-fpath = './../../results/'
+fpath = './../../results/arango'
 
 port = 8529
 ip_addr = '127.0.0.1'

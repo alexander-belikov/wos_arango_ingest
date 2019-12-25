@@ -162,9 +162,9 @@ def basic_query(query, port=8529, ip_addr='127.0.0.1',
     return cursor
 
 
-def profile_query(query, nq, profile_times, fpath, limit=None, profile=False, **kwargs):
+def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
     limit_str = f'_limit_{limit}' if limit else ''
-    if profile:
+    if profile_times:
         print(f'starting profiling: {limit}')
         profiling = [basic_query(query, profile=True, **kwargs).profile() for n in range(profile_times)]
         with open(join(fpath, f'query{nq}_profile{limit_str}.json'), 'w') as fp:
