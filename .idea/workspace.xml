@@ -2,8 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dd95ac76-09be-4379-a078-a8eae6a19bf4" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_profile_limit_10.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_profile_limit_100.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_profile_limit_10000.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_result_limit_10.json.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_result_limit_100.json.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_result_limit_1000.json.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/results/arango/query4_result_limit_10000.json.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/arango/query4.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/query4.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/arango/query5.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/query5.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_1000.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query4_profile_limit_1000.json" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
