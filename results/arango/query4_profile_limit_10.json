@@ -1,0 +1,22 @@
+[
+    {
+        "initializing": 1.1920928955078125e-06,
+        "parsing": 7.867813110351562e-05,
+        "optimizing ast": 1.1205673217773438e-05,
+        "loading collections": 5.7220458984375e-06,
+        "instantiating plan": 7.2479248046875e-05,
+        "optimizing plan": 0.554222583770752,
+        "executing": 0.4376180171966553,
+        "finalizing": 8.273124694824219e-05
+    },
+    {
+        "initializing": 1.9073486328125e-06,
+        "parsing": 9.34600830078125e-05,
+        "optimizing ast": 1.1920928955078125e-05,
+        "loading collections": 7.867813110351562e-06,
+        "instantiating plan": 5.9604644775390625e-05,
+        "optimizing plan": 0.337878942489624,
+        "executing": 0.34408068656921387,
+        "finalizing": 8.296966552734375e-05
+    }
+]
