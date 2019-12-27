@@ -25,15 +25,19 @@ n = list(r)[0]
 order_max = int(np.log(n)/np.log(10))
 
 q0 = f"""
-LET cnts = (
-    FOR j IN publications _insert_limit
-        LET first = (FOR c IN 1 INBOUND p publications_publications_edges RETURN c._id)
-        LET second = (FOR c IN 2 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
-        FILTER LENGTH(first) > 0
-        RETURN {{pub: p._id, f: LENGTH(second)/LENGTH(first), na: LENGTH(first)}}
-        )
-FOR pub in cnts SORT pub.f DESC LIMIT 100
-return pub"""
+    FOR j IN media FILTER j.issn == '0014-9446'
+    RETURN MERGE({{ja: j.issn}}, {{stats:
+    (
+        FOR p in 1 INBOUND j publications_media_edges FILTER p.year == 1978
+            FOR p2 in 1 OUTBOUND p publications_publications_edges
+                FILTER p2.year < 1978 AND p2.year >= 1975
+                FOR j2 in 1 OUTBOUND p2 publications_media_edges
+                    COLLECT jbt=j2.issn WITH COUNT INTO size
+                    SORT size DESC
+            LIMIT 100
+        RETURN {{jb: jbt, s: size}}
+    )}})
+"""
 
 
 n_profile = 3
