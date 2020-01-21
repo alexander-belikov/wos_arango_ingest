@@ -2,6 +2,13 @@ import numpy as np
 from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
+test = False
+# test = True
+n_profile = 3
+nq = 3
+fpath = './../../results/arango'
+
+
 q_aux = """
 FOR p IN publications
     LET contrs = (FOR c IN 1..1 INBOUND p contributors_publications_edges RETURN c)
@@ -11,11 +18,6 @@ FOR p IN publications
             INSERT {_from : c._id, _to : org._id, "wosid": p._key, "year": p.year} 
             IN contributors_organizations_edges
 """
-
-test = False
-# test = True
-nq = 3
-fpath = './../../results/'
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -38,9 +40,6 @@ FOR a IN contributors _insert_limit
     LET times = LENGTH(FOR org IN 1..1 OUTBOUND a contributors_organizations_edges 
     RETURN DISTINCT org.country) FILTER times > 2 
     RETURN MERGE(a, {{'cnt': times}})"""
-
-
-n_profile = 3
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders

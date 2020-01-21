@@ -2,6 +2,13 @@ import numpy as np
 from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
+test = False
+test = True
+n_profile = 3
+nq = 1
+fpath = './../../results/arango'
+cyear = 1978
+
 q_aux = """
 FOR p IN publications
     LET contrs = (FOR c IN 1..1 INBOUND p contributors_publications_edges RETURN c)
@@ -11,11 +18,6 @@ FOR p IN publications
             INSERT {_from : c._id, _to : org._id, "wosid": p._key, "year": p.year} 
             IN contributors_organizations_edges
 """
-
-test = False
-# test = True
-nq = 1
-fpath = './../../results/'
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -36,15 +38,13 @@ q0 = f"""
 LET cnts =
     (FOR j IN media _insert_limit
         LET cc = (FOR v IN 1..1 INBOUND j publications_media_edges
-            FILTER v.year == 1978
+            FILTER v.year == {cyear}
             RETURN v)
         RETURN {{journal: j, 'number_pubs': LENGTH(cc)}})
 FOR doc in cnts
     SORT doc.number_pubs DESC
     LIMIT 10
 RETURN doc"""
-
-n_profile = 3
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders

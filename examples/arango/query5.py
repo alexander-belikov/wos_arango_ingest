@@ -3,10 +3,12 @@ from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
 test = False
-# test = True
-# profile = True
-nq = 4
-fpath = './../../results/'
+test = True
+n_profile = 3
+nq = 5
+fpath = './../../results/arango'
+cyear = 1978
+delta_year = 5
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -28,19 +30,15 @@ q0 = f"""
     FOR j IN media FILTER j.issn == '0014-9446'
     RETURN MERGE({{ja: j.issn}}, {{stats:
     (
-        FOR p in 1 INBOUND j publications_media_edges FILTER p.year == 1978
+        FOR p in 1 INBOUND j publications_media_edges FILTER p.year == {cyear}
             FOR p2 in 1 OUTBOUND p publications_publications_edges
-                FILTER p2.year < 1978 AND p2.year >= 1975
+                FILTER p2.year < {cyear} AND p2.year >= {cyear - delta_year}
                 FOR j2 in 1 OUTBOUND p2 publications_media_edges
                     COLLECT jbt=j2.issn WITH COUNT INTO size
                     SORT size DESC
-            LIMIT 100
         RETURN {{jb: jbt, s: size}}
     )}})
 """
-
-
-n_profile = 3
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
@@ -50,6 +48,7 @@ else:
     limits = [int(n) for n in limits] + [None]
 
 limits = [None]
+
 print(limits)
 for limit in limits:
     if limit:

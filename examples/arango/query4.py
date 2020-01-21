@@ -3,10 +3,11 @@ from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
 test = False
-# test = True
-profile = True
+test = True
+n_profile = 3
 nq = 4
 fpath = './../../results/arango'
+threshold = 1.5
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -25,29 +26,22 @@ n = list(r)[0]
 order_max = int(np.log(n)/np.log(10))
 
 q0 = f"""
-FOR pub IN publications _insert_limit
-    LET first = (FOR c IN 1 INBOUND pub publications_publications_edges RETURN c._id)
+FOR p IN publications _insert_limit
+    LET first = (FOR c IN 1 INBOUND p publications_publications_edges RETURN c._id)
     FILTER LENGTH(first) > 0
-    LET second = (FOR c IN 2 INBOUND pub publications_publications_edges RETURN DISTINCT c._id)
-    LET result = {{'pub': pub._key, na: LENGTH(first), 
-                    nb: LENGTH(second), f: LENGTH(second)/LENGTH(first)}}
-    FILTER result.f > 5.0
-    SORT result.f DESC
-    LIMIT 100
-    RETURN result
+    LET second = (FOR c IN 2 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
+    FILTER LENGTH(second) > {threshold}*LENGTH(first)
+    COLLECT fraction = LENGTH(second)/LENGTH(first) INTO gg
+    SORT fraction DESC
+    RETURN {{f: fraction, ids: gg[*].p._key}}
 """
-
-
-n_profile = 2
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
 if test:
-    limits = [100, 1000]
+    limits = [100, 1000, 10000, 100000]
 else:
     limits = [int(n) for n in limits] + [None]
-
-limits = [10000000, None]
 
 print(limits)
 for limit in limits:
