@@ -43,7 +43,7 @@ q0 = f"""
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
 if test:
-    limits = [100, 1000]
+    limits = [5, 25, 125, 625]
 else:
     limits = [int(n) for n in limits] + [None]
 
@@ -52,7 +52,7 @@ limits = [None]
 print(limits)
 for limit in limits:
     if limit:
-        q = q0.replace('_insert_limit', f'LIMIT {limit}')
+        q = q0.replace('_insert_limit', f'SORT RAND() LIMIT {limit} ')
     else:
         q = q0.replace('_insert_limit', f'')
     profile_query(q, nq, n_profile, fpath, limit)

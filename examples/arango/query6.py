@@ -3,21 +3,12 @@ from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
 test = False
-# test = True
+test = True
 n_profile = 3
-nq = 3
+nq = 6
 fpath = './../../results/arango'
-
-
-q_aux = """
-FOR p IN publications
-    LET contrs = (FOR c IN 1..1 INBOUND p contributors_publications_edges RETURN c)
-    LET orgs = (FOR org IN 1..1 INBOUND p organizations_publications_edges RETURN org)
-    FOR c in contrs
-        FOR org in orgs
-            INSERT {_from : c._id, _to : org._id, "wosid": p._key, "year": p.year} 
-            IN contributors_organizations_edges
-"""
+cyear = 1978
+delta_year = 5
 
 port = 8529
 ip_addr = '127.0.0.1'
@@ -29,17 +20,19 @@ client = ArangoClient(hosts=hosts)
 sys_db = client.db('_system', username=cred_name, password=cred_pass)
 
 
-cname = 'contributors'
+cname = 'publications'
 
 r = sys_db.aql.execute(f'RETURN LENGTH({cname})')
 n = list(r)[0]
 order_max = int(np.log(n)/np.log(10))
 
 q0 = f"""
-FOR a IN contributors _insert_limit
-    LET times = LENGTH(FOR org IN 1..1 OUTBOUND a contributors_organizations_edges 
-    RETURN DISTINCT org.country) FILTER times > 2 
-    RETURN MERGE(a, {{'cnt': times}})"""
+FOR p IN publications _insert_limit 
+    LET power_set = (FOR c IN 1..5 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
+        COLLECT size = LENGTH(power_set) INTO gg
+        SORT size DESC
+        RETURN {{pset5: size, ids: gg[*].p._key}}
+"""
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
@@ -48,6 +41,7 @@ if test:
 else:
     limits = [int(n) for n in limits] + [None]
 
+
 print(limits)
 for limit in limits:
     if limit:
@@ -55,10 +49,3 @@ for limit in limits:
     else:
         q = q0.replace('_insert_limit', f'')
     profile_query(q, nq, n_profile, fpath, limit)
-
-
-
-
-
-
-

@@ -49,7 +49,7 @@ else:
 print(limits)
 for limit in limits:
     if limit:
-        q = q0.replace("_insert_limit", f"LIMIT {limit}")
+        q = q0.replace('_insert_limit', f'SORT RAND() LIMIT {limit} ')
     else:
         q = q0.replace("_insert_limit", f"")
     profile_query(q, nq, n_profile, fpath, limit)
