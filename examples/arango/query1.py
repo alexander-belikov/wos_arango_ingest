@@ -3,7 +3,7 @@ from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
 test = False
-test = True
+# test = True
 n_profile = 3
 nq = 1
 fpath = './../../results/arango'

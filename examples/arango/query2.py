@@ -5,7 +5,7 @@ import string
 from wos_db_studies.stopwords import _stopwords
 
 test = False
-test = True
+# test = True
 n_profile = 3
 nq = 2
 fpath = './../../results/arango'
