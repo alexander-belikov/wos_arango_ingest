@@ -4,8 +4,13 @@ from wos_db_studies.utils import profile_query
 import string
 from wos_db_studies.stopwords import _stopwords
 
-test = False
-# test = True
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-t', '--test', default=True,
+                    help='test setting')
+args = parser.parse_args()
+test = args.test
+
 n_profile = 3
 nq = 2
 fpath = './../../results/arango'
@@ -47,6 +52,8 @@ else:
     limits = [int(n) for n in limits] + [None]
 
 print(limits)
+
+
 for limit in limits:
     if limit:
         q = q0.replace('_insert_limit', f'SORT RAND() LIMIT {limit} ')

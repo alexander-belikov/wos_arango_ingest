@@ -2,8 +2,13 @@ import numpy as np
 from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 
-test = False
-# test = True
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-t', '--test', default=True,
+                    help='test setting')
+args = parser.parse_args()
+test = args.test
+
 n_profile = 3
 nq = 6
 fpath = './../../results/arango'
