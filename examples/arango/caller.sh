@@ -1,4 +1,7 @@
-for i in {2..4} ; do
-	fname="query$i.py -t True"
-	python $fname
+test=$1
+imin=$2
+imax=$3
+for i in $(seq "$imin" "$imax"); do
+	fname="run_query.py -v $i -t $test"
+	python "fname"
 done
