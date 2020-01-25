@@ -1,4 +1,4 @@
-_stopwords = [
+stop_words_nltk = [
     "i",
     "me",
     "my",
