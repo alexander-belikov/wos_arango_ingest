@@ -190,4 +190,3 @@ def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
                        'wt', encoding="ascii") as fp:
             chunk = list(cursor.fetch()['batch'])
             json.dump(chunk, fp, indent=4)
-    cursor.close()

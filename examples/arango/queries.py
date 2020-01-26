@@ -30,8 +30,8 @@ qdict = {
                 FOR doc IN publications FILTER doc.title __insert_limit 
                     FOR word in SPLIT(LOWER(doc.title), ' ') 
                         COLLECT uword = word WITH COUNT INTO count
-                        SORT count DESC
                         FILTER uword NOT IN {str(all_stops)}
+                        SORT count DESC LIMIT 1000
                         RETURN {{uword, count}}""",
         },
 
