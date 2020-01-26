@@ -57,10 +57,10 @@ r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
 n = list(r)[0]
 order_max = int(np.log(n)/np.log(10))
 
-q = current_query['q']
+q0 = current_query['q']
 for k in sub_keys:
     print(k, current_query[k])
-    q = q.replace(k, f'{current_query[k]}')
+    q0 = q0.replace(k, f'{current_query[k]}')
 
 orders = np.arange(1, order_max + 1, 1)
 limits = 10 ** orders
@@ -72,7 +72,7 @@ else:
 print(limits)
 for limit in limits:
     if limit:
-        q = q.replace('__insert_limit', f'LIMIT {2*limit} SORT RAND() LIMIT {limit} ')
+        q = q0.replace('__insert_limit', f'LIMIT {2*limit} SORT RAND() LIMIT {limit} ')
     else:
-        q = q.replace('__insert_limit', f'')
+        q = q0.replace('__insert_limit', f'')
     profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)
