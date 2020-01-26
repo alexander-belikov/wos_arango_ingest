@@ -24,8 +24,8 @@ parser.add_argument('-t', '--test', default=False,
 parser.add_argument('--verbose', default=True,
                     type=str2bool,
                     help='verbosity')
-parser.add_argument('-n', '--nprofile', default=True,
-                    type=str2bool,
+parser.add_argument('-n', '--nprofile', default=1,
+                    type=int,
                     help='number of times to profile')
 parser.add_argument('-v', '--version', default='1',
                     type=str, help='version of query to run')
@@ -90,11 +90,11 @@ for limit in limits:
         q = q0.replace('__insert_limit', f'LIMIT {2*limit} SORT RAND() LIMIT {limit} ')
     else:
         q = q0.replace('__insert_limit', f'')
-    if '_issns' in current_query:
-        q = q.replace('__issns_filter_limit', f'FILTER j.issn in {str(current_query["_issns"][:limit])}')
+    if '__issns' in current_query:
+        q = q.replace('__issns_filter_limit', f'FILTER j.issn in {str(current_query["__issns"][:limit])}')
     else:
         q = q.replace('__issns_filter_limit', f'')
     if verbose:
         print(q)
 
-    profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)
+    # profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)
