@@ -19,16 +19,7 @@ qdict = {
                         RETURN {{journal: j, 'number_pubs': LENGTH(cc)}})
                 FOR doc in cnts
                     SORT doc.number_pubs DESC
-                RETURN doc""",
-            'run_q_aux': False,
-            'q_aux': """
-                FOR p IN publications
-                    LET contrs = (FOR c IN 1..1 INBOUND p contributors_publications_edges RETURN c)
-                    LET orgs = (FOR org IN 1..1 INBOUND p organizations_publications_edges RETURN org)
-                    FOR c in contrs
-                        FOR org in orgs
-                            INSERT {_from : c._id, _to : org._id, "wosid": p._key, "year": p.year} 
-                            IN contributors_organizations_edges"""
+                RETURN doc"""
         },
 
     '2':
@@ -36,7 +27,7 @@ qdict = {
             'description': 'return 100 most popular words (minus stop words) from titles',
             'main_collection': 'publications',
             'q': f"""
-                FOR doc IN publications __insert_limit 
+                FOR doc IN publications FILTER doc.title __insert_limit 
                     FOR word in SPLIT(LOWER(doc.title), ' ') 
                         COLLECT uword = word WITH COUNT INTO count
                         SORT count DESC
@@ -54,6 +45,15 @@ qdict = {
                     LET times = LENGTH(FOR org IN 1..1 OUTBOUND a contributors_organizations_edges 
                     RETURN DISTINCT org.country) FILTER times > 2 
                     RETURN MERGE(a, {{'cnt': times}})""",
+            'run_q_aux': False,
+            'q_aux': """
+                FOR p IN publications
+                    LET contrs = (FOR c IN 1..1 INBOUND p contributors_publications_edges RETURN c)
+                    LET orgs = (FOR org IN 1..1 INBOUND p organizations_publications_edges RETURN org)
+                    FOR c in contrs
+                        FOR org in orgs
+                            INSERT {_from : c._id, _to : org._id, "wosid": p._key, "year": p.year} 
+                            IN contributors_organizations_edges"""
         },
 
     '4':

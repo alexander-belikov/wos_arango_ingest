@@ -41,6 +41,19 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
         vmap['organization']: ['organization', 'country', 'city']
     }
 
+    extra_indices = {
+        vmap['pub']: [
+            {'type': 'hash', 'fields': ['title']},
+            {'type': 'hash', 'fields': ['year']},
+        ],
+        vmap['medium']: [
+            {'type': 'hash', 'fields': ['issn']},
+        ],
+        vmap['organization']: [
+            {'type': 'hash', 'fields': ['country']},
+        ]
+    }
+
     retrieve_fields_dict = {
         vmap['pub']: ['_key', 'accession_no', 'title', 'year', 'month', 'day'],
         vmap['medium']: ['issn', 'isbn', 'title', 'eissn', 'eisbn'],
