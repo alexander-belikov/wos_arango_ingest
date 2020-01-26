@@ -191,16 +191,3 @@ def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
             chunk = list(cursor.fetch()['batch'])
             json.dump(chunk, fp, indent=4)
     cursor.close()
-
-
-
-
-    counter = 0
-    while cursor.has_more():
-        with gzip.open(join(fpath, f'query{nq}_result{limit_str}_batch_{counter}.json.gz'),
-                       'wt', encoding="ascii") as fp:
-            chunk = cursor.fetch()['batch']
-            json.dump(chunk, fp, indent=4)
-
-        counter +=1
-
