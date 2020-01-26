@@ -1,0 +1,12 @@
+[
+    {
+        "initializing": 7.152557373046875e-07,
+        "parsing": 3.62396240234375e-05,
+        "optimizing ast": 3.814697265625e-06,
+        "loading collections": 2.6226043701171875e-06,
+        "instantiating plan": 2.384185791015625e-05,
+        "optimizing plan": 0.014427423477172852,
+        "executing": 0.0073316097259521484,
+        "finalizing": 6.937980651855469e-05
+    }
+]

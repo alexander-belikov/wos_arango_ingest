@@ -20,6 +20,7 @@ qdict = {
                 FOR doc in cnts
                     SORT doc.number_pubs DESC
                 RETURN doc""",
+            'run_q_aux': False,
             'q_aux': """
                 FOR p IN publications
                     LET contrs = (FOR c IN 1..1 INBOUND p contributors_publications_edges RETURN c)
