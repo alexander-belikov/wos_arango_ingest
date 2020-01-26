@@ -6,6 +6,7 @@ from queries import qdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--test', default=True,
+                    type=bool,
                     help='test setting')
 parser.add_argument('-n', '--nprofile', default=True,
                     help='number of times to profile')
