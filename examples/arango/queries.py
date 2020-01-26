@@ -1,7 +1,20 @@
 from wos_db_studies.stopwords import stop_words_nltk
+import pandas as pd
 import string
+
 puncts = list(string.punctuation)
 all_stops = puncts + stop_words_nltk
+
+
+def get_issns():
+    fpath = './../../results/arango/journal_count.csv'
+    df = pd.read_csv(fpath, index_col=0)
+    mask = df['issn'].notnull()
+    mask2 = (df['counts'] > 10)
+    df = df.loc[mask & mask2].copy()
+    issns_sorted = df.sort_values('counts', ascending=False)['issn'].to_list()
+    return issns_sorted
+
 
 qdict = {
     '1':
@@ -24,7 +37,7 @@ qdict = {
 
     '2':
         {
-            'description': 'return 100 most popular words (minus stop words) from titles',
+            'description': 'return 1000 most popular words (minus stop words) from titles',
             'main_collection': 'publications',
             'q': f"""
                 FOR doc IN publications FILTER doc.title __insert_limit 
@@ -39,7 +52,7 @@ qdict = {
         {
             'description': 'return the list of authors who changed their country more than twice. '
                            'NB: make sure contributors_organizations_edges collection is set up',
-            'main_collection': 'publications',
+            'main_collection': 'contributors',
             'q': f"""
                 FOR a IN contributors __insert_limit
                     LET times = LENGTH(FOR org IN 1..1 OUTBOUND a contributors_organizations_edges 
@@ -61,7 +74,7 @@ qdict = {
             'description': 'for publication x compute the ratio of number of second order neighbours to '
                            'first order neighbours in the directed network of citations. '
                            '(neighbours cite x)',
-            '_threshold': 1.5,
+            '_threshold': 5,
             'main_collection': 'publications',
             'q': f"""
                 FOR p IN publications __insert_limit
@@ -85,16 +98,17 @@ qdict = {
                            ' The result is a 10 by 10 matrix.',
             '_current_year': 1978,
             '_delta_year': 5,
-            '_issns': '',
-            'main_collection': 'publications',
+            '__issns': get_issns(),
+            'main_collection': 'media',
             'q': f"""
-                FOR j IN media FILTER j.issn == '0014-9446'
+                FOR j IN media __issns_filter_limit
                 RETURN MERGE({{ja: j.issn}}, {{stats:
                 (
                     FOR p in 1 INBOUND j publications_media_edges FILTER p.year == _current_year
                         FOR p2 in 1 OUTBOUND p publications_publications_edges
                             FILTER p2.year < _current_year AND p2.year >= (_current_year - _delta_year)
-                            FOR j2 in 1 OUTBOUND p2 publications_media_edges
+                            FOR j2 in 1 OUTBOUND p2 publications_media_edges 
+                                __issns_filter_limit
                                 COLLECT jbt=j2.issn WITH COUNT INTO size
                                 SORT size DESC
                     RETURN {{jb: jbt, s: size}}

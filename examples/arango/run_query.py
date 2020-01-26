@@ -18,9 +18,12 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-t', '--test', default=True,
+parser.add_argument('-t', '--test', default=False,
                     type=str2bool,
                     help='test setting')
+parser.add_argument('--verbose', default=True,
+                    type=str2bool,
+                    help='verbosity')
 parser.add_argument('-n', '--nprofile', default=True,
                     type=str2bool,
                     help='number of times to profile')
@@ -29,12 +32,14 @@ parser.add_argument('-v', '--version', default='1',
 parser.add_argument('-b', '--batch-size', default=100000,
                     type=int, help='batch size to use for query retrieval')
 
+
 args = parser.parse_args()
 print(args)
 test = args.test
 n_profile = args.nprofile
 nq = args.version
 batch_size = args.batch_size
+verbose = args.verbose
 
 fpath = './../../results/arango'
 
@@ -55,24 +60,41 @@ if 'run_q_aux' in current_query and current_query['run_q_aux'] and 'q_aux' in cu
 
 r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
 n = list(r)[0]
-order_max = int(np.log(n)/np.log(10))
+if current_query['main_collection'] == 'publications':
+    order_max = int(np.log(n)/np.log(10))
+    orders = np.arange(1, order_max + 1, 1)
+    limits = 10 ** orders
+else:
+    order_max = int(np.log(n/5) / np.log(2))
+    orders = np.arange(0, order_max+1, 1)
+    limits = 5*2**orders
 
 q0 = current_query['q']
 for k in sub_keys:
-    print(k, current_query[k])
+    # print(k, current_query[k])
     q0 = q0.replace(k, f'{current_query[k]}')
 
-orders = np.arange(1, order_max + 1, 1)
-limits = 10 ** orders
+
 if test:
-    limits = [100, 1000]
+    limits = limits[:2]
 else:
     limits = [int(n) for n in limits] + [None]
 
-print(limits)
+
+print(f'max docs: {n}; limits: {limits}')
+
 for limit in limits:
+    print(q0)
     if limit:
+        print('replace')
         q = q0.replace('__insert_limit', f'LIMIT {2*limit} SORT RAND() LIMIT {limit} ')
     else:
         q = q0.replace('__insert_limit', f'')
+    if '_issns' in current_query:
+        q = q.replace('__issns_filter_limit', f'FILTER j.issn in {str(current_query["_issns"][:limit])}')
+    else:
+        q = q.replace('__issns_filter_limit', f'')
+    if verbose:
+        print(q)
+
     profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)

@@ -2,7 +2,7 @@ import gzip
 import json
 import pandas as pd
 
-with gzip.open('../../results/arango/query1_result.json.gz', "rb") as f:
+with gzip.open('../../results/arango/query1_result_batch_0.json.gz', "rb") as f:
     data = json.loads(f.read(), encoding="utf-8")
 
 issns = [x['journal']['issn'] for x in data]
