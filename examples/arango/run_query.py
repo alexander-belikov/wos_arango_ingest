@@ -97,4 +97,4 @@ for limit in limits:
     if verbose:
         print(q)
 
-    # profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)
+    profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)
