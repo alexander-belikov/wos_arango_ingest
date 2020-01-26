@@ -4,11 +4,25 @@ from wos_db_studies.utils import profile_query
 import argparse
 from queries import qdict
 
+
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 parser = argparse.ArgumentParser()
+
 parser.add_argument('-t', '--test', default=True,
-                    type=bool,
+                    type=str2bool,
                     help='test setting')
 parser.add_argument('-n', '--nprofile', default=True,
+                    type=str2bool,
                     help='number of times to profile')
 parser.add_argument('-v', '--version', default='1',
                     type=str, help='version of query to run')
@@ -62,11 +76,3 @@ for limit in limits:
     else:
         q = q.replace('__insert_limit', f'')
     profile_query(q, nq, n_profile, fpath, limit, batch_size=batch_size)
-
-
-
-
-
-
-
-
