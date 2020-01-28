@@ -1,0 +1,32 @@
+[
+    {
+        "initializing": 1.6689300537109375e-06,
+        "parsing": 4.696846008300781e-05,
+        "optimizing ast": 5.9604644775390625e-06,
+        "loading collections": 5.4836273193359375e-06,
+        "instantiating plan": 3.528594970703125e-05,
+        "optimizing plan": 0.00020432472229003906,
+        "executing": 0.04154539108276367,
+        "finalizing": 0.0002701282501220703
+    },
+    {
+        "initializing": 1.1920928955078125e-06,
+        "parsing": 4.7206878662109375e-05,
+        "optimizing ast": 5.7220458984375e-06,
+        "loading collections": 5.245208740234375e-06,
+        "instantiating plan": 3.4332275390625e-05,
+        "optimizing plan": 0.0002353191375732422,
+        "executing": 0.013890504837036133,
+        "finalizing": 0.0002319812774658203
+    },
+    {
+        "initializing": 1.6689300537109375e-06,
+        "parsing": 5.340576171875e-05,
+        "optimizing ast": 6.4373016357421875e-06,
+        "loading collections": 6.198883056640625e-06,
+        "instantiating plan": 4.0531158447265625e-05,
+        "optimizing plan": 0.0002694129943847656,
+        "executing": 0.01046609878540039,
+        "finalizing": 0.0002694129943847656
+    }
+]
