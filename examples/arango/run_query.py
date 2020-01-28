@@ -58,7 +58,12 @@ sub_keys = [s for s in current_query.keys() if s[0] == '_' and s[1] != '_']
 if 'run_q_aux' in current_query and current_query['run_q_aux'] and 'q_aux' in current_query:
     sys_db.aql.execute(current_query['q_aux'])
 
-r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
+if nq == '4':
+    r = sys_db.aql.execute(f'RETURN LENGTH(FOR doc in {current_query["main_collection"]} '
+                           f'FILTER doc.year == {current_query["_current_year"]})')
+else:
+    r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
+
 n = list(r)[0]
 if current_query['main_collection'] == 'publications':
     order_max = int(np.log(n)/np.log(10))

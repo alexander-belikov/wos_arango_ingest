@@ -75,9 +75,10 @@ qdict = {
                            'first order neighbours in the directed network of citations. '
                            '(neighbours cite x)',
             '_threshold': 5,
+            '_current_year': 1978,
             'main_collection': 'publications',
             'q': f"""
-                FOR p IN publications __insert_limit
+                FOR p IN publications FILTER p.year == _current_year __insert_limit
                     LET first = (FOR c IN 1 INBOUND p publications_publications_edges RETURN c._id)
                     FILTER LENGTH(first) > 0
                     LET second = (FOR c IN 2 INBOUND p publications_publications_edges RETURN DISTINCT c._id)
