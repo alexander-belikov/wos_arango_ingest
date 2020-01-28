@@ -60,7 +60,7 @@ if 'run_q_aux' in current_query and current_query['run_q_aux'] and 'q_aux' in cu
 
 if nq == '4':
     r = sys_db.aql.execute(f'RETURN LENGTH(FOR doc in {current_query["main_collection"]} '
-                           f'FILTER doc.year == {current_query["_current_year"]})')
+                           f'FILTER doc.year == {current_query["_current_year"]} RETURN doc)')
 else:
     r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
 
