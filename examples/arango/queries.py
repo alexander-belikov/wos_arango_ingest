@@ -6,14 +6,21 @@ puncts = list(string.punctuation)
 all_stops = puncts + stop_words_nltk
 
 
-def get_issns():
+def get_issns(counts_limit=10):
     fpath = './../../results/arango/journal_count.csv'
     df = pd.read_csv(fpath, index_col=0)
     mask = df['issn'].notnull()
-    mask2 = (df['counts'] > 10)
+    mask2 = (df['counts'] > counts_limit)
     df = df.loc[mask & mask2].copy()
     issns_sorted = df.sort_values('counts', ascending=False)['issn'].to_list()
     return issns_sorted
+
+
+def get_pubs(head=100):
+    fpath = './../../results/arango/q4_result.csv'
+    df = pd.read_csv(fpath, index_col=0)
+    ids = df.head(head)['id'].to_list()
+    return ids
 
 
 qdict = {
@@ -122,9 +129,11 @@ qdict = {
                            ' defined as papers cited by p, papers that are cited by papers cited by p etc. '
                            '5 order out',
             '_current_year': 1978,
+            '__pids_head': 100,
+            '__pids': get_pubs,
             'main_collection': 'publications',
             'q': f"""
-                FOR p IN publications FILTER p.year ==  _current_year __insert_limit 
+                FOR p IN publications __pids_filter_limit
                     LET power_set = (FOR c IN 1..5 OUTBOUND p publications_publications_edges RETURN DISTINCT c._id)
                         COLLECT size = LENGTH(power_set) INTO gg
                         SORT size DESC

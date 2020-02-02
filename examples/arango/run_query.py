@@ -61,11 +61,13 @@ if 'run_q_aux' in current_query and current_query['run_q_aux'] and 'q_aux' in cu
 if nq == '4':
     r = sys_db.aql.execute(f'RETURN LENGTH(FOR doc in {current_query["main_collection"]} '
                            f'FILTER doc.year == {current_query["_current_year"]} RETURN doc)')
+elif nq == '6':
+    r = [current_query['__pids_head']]
 else:
     r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
 
 n = list(r)[0]
-if current_query['main_collection'] == 'publications':
+if current_query['main_collection'] == 'publications' and nq != 6:
     order_max = int(np.log(n)/np.log(10))
     orders = np.arange(1, order_max + 1, 1)
     limits = 10 ** orders
@@ -83,7 +85,10 @@ for k in sub_keys:
 if test:
     limits = limits[:2]
 else:
-    limits = [int(n) for n in limits] + [None]
+    if nq != 6:
+        limits = [int(n) for n in limits] + [None]
+    else:
+        limits = [int(n) for n in limits] + [n]
 
 
 print(f'max docs: {n}; limits: {limits}')
@@ -91,7 +96,6 @@ print(f'max docs: {n}; limits: {limits}')
 for limit in limits:
     print(q0)
     if limit:
-        print('replace')
         q = q0.replace('__insert_limit', f'LIMIT {2*limit} SORT RAND() LIMIT {limit} ')
     else:
         q = q0.replace('__insert_limit', f'')
@@ -99,6 +103,12 @@ for limit in limits:
         q = q.replace('__issns_filter_limit', f'FILTER j.issn in {str(current_query["__issns"][:limit])}')
     else:
         q = q.replace('__issns_filter_limit', f'')
+
+    if '__pids' in current_query:
+        q = q.replace('__pids_filter_limit', f'FILTER p._key in {str(current_query["__pids"](limit))}')
+    else:
+        q = q.replace('__pids_filter_limit', f'')
+
     if verbose:
         print(q)
 
