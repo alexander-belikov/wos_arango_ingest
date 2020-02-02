@@ -67,7 +67,7 @@ else:
     r = sys_db.aql.execute(f'RETURN LENGTH({current_query["main_collection"]})')
 
 n = list(r)[0]
-if current_query['main_collection'] == 'publications' and nq != 6:
+if current_query['main_collection'] == 'publications' and nq != '6':
     order_max = int(np.log(n)/np.log(10))
     orders = np.arange(1, order_max + 1, 1)
     limits = 10 ** orders
@@ -85,7 +85,7 @@ for k in sub_keys:
 if test:
     limits = limits[:2]
 else:
-    if nq != 6:
+    if nq != '6':
         limits = [int(n) for n in limits] + [None]
     else:
         limits = [int(n) for n in limits] + [n]
