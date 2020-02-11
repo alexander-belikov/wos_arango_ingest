@@ -78,7 +78,6 @@ else:
 
 q0 = current_query['q']
 for k in sub_keys:
-    # print(k, current_query[k])
     q0 = q0.replace(k, f'{current_query[k]}')
 
 

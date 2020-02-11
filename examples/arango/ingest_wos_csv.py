@@ -5,7 +5,8 @@ from os import listdir
 from os.path import isfile, join
 import csv
 from arango import ArangoClient
-from wos_db_studies.utils import delete_collections, upsert_docs_batch, insert_edges_batch, clear_first_level_nones
+from wos_db_studies.utils import delete_collections, upsert_docs_batch, insert_edges_batch
+from wos_db_studies.utils import clear_first_level_nones, update_to_numeric
 from wos_db_studies.chunker import Chunker
 from pprint import pprint
 
@@ -43,14 +44,14 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
     extra_indices = {
         vmap['pub']: [
-            {'type': 'hash', 'fields': ['title']},
-            {'type': 'hash', 'fields': ['year']},
+            {'type': 'hash', 'unique': False, 'fields': ['title']},
+            {'type': 'hash', 'unique': False, 'fields': ['year']},
         ],
         vmap['medium']: [
-            {'type': 'hash', 'fields': ['issn']},
+            {'type': 'hash', 'unique': False, 'fields': ['issn']},
         ],
         vmap['organization']: [
-            {'type': 'hash', 'fields': ['country']},
+            {'type': 'hash', 'unique': False, 'fields': ['country']},
         ]
     }
 
@@ -62,6 +63,10 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
         vmap['organization']: ['organization', 'country', 'city']
     }
 
+    numeric_fields_dict = {
+        vmap['pub']: ['year', 'month', 'day']
+    }
+
     pub_conv_main = {'wos_id': '_key', 'pubyear': 'year', 'pubmonth': 'month', 'pubday': 'day'}
     pub_conv_ref = {'uid': '_key'}
     medium_conv = {'source': 'title'}
@@ -71,7 +76,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
         (vmap['pub'], vmap['medium'], pub_conv_main, medium_conv),
         (vmap['pub'], vmap['lang'], pub_conv_main, {}),
         (vmap['contributor'], vmap['pub'], {}, pub_conv_main),
-        (vmap['organization'], vmap['pub'], {}, pub_conv_main)
+        (vmap['organization'], vmap['pub'], {}, pub_conv_main),
     ]
 
     graph = {}
@@ -87,6 +92,17 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
         'contributors': [('contributor', 'pub')],
         'institutions': [('organization', 'pub')],
         'refs': [('pub', 'pub')]
+    }
+
+    extra_graphs = {
+        ('contributor', 'organization'):
+            [
+                'pub',
+                [
+                    ('wosid', '_key'),
+                    ('year', 'year')
+                ]
+            ]
     }
 
     modes2graphs_ = {k: [f'{vmap[from_]}_{vmap[to_]}_graph'
@@ -151,20 +167,34 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
                 g = sys_db.create_graph(gname)
             if not sys_db.has_collection(vcol_to):
                 _ = g.create_vertex_collection(vcol_to)
-            general_collection = sys_db.collection(vcol_to)
-            index_fields = index_fields_dict[vcol_to]
-            ih = general_collection.add_hash_index(fields=index_fields, unique=True)
+                general_collection = sys_db.collection(vcol_to)
+                index_fields = index_fields_dict[vcol_to]
+                ih = general_collection.add_hash_index(fields=index_fields, unique=True)
             if not sys_db.has_collection(vcol_from):
                 _ = g.create_vertex_collection(vcol_from)
-            general_collection = sys_db.collection(vcol_from)
-            index_fields = index_fields_dict[vcol_from]
-
-            ih = general_collection.add_hash_index(fields=index_fields, unique=True)
+                general_collection = sys_db.collection(vcol_from)
+                index_fields = index_fields_dict[vcol_from]
+                ih = general_collection.add_hash_index(fields=index_fields, unique=True)
 
             _ = g.create_edge_definition(
                 edge_collection=edge_col,
                 from_vertex_collections=[vcol_from],
                 to_vertex_collections=[vcol_to])
+
+        for uset, vset in extra_graphs.keys():
+            ucol = vmap[uset]
+            vcol = vmap[vset]
+            edge_col = f'{ucol}_{vcol}_edges'
+            _ = g.create_edge_definition(
+                edge_collection=edge_col,
+                from_vertex_collections=[ucol],
+                to_vertex_collections=[vcol])
+
+        # add secondary indices:
+        for cname, list_indices in extra_indices.items():
+            for index_dict in list_indices:
+                general_collection = sys_db.collection(cname)
+                ih = general_collection.add_hash_index(fields=index_dict['fields'], unique=index_dict['unique'])
 
     print([c['name'] for c in sys_db.collections() if c['name'][0] != '_'])
     seconds_start0 = time.time()
@@ -222,7 +252,6 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
                         from_set = [dict(y) for y in set(tuple(x.items()) for x in from_list)]
                         query0 = upsert_docs_batch(from_set, vfrom,
                                                    index_fields_dict[vfrom], 'doc', True)
-                        # print(query0)
                         cursor = sys_db.aql.execute(query0)
 
                         if verbose:
@@ -280,11 +309,47 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
     seconds_end0 = time.time()
     print(f'full ingest took {(seconds_end0 - seconds_start0) :.1f} sec')
 
+    print(f'updating some fields to numeric...')
+    seconds_start0 = time.time()
+
+    for cname, fields in numeric_fields_dict.items():
+        for field in fields:
+            query0 = update_to_numeric(cname, field)
+            cursor = sys_db.aql.execute(query0)
+    seconds_end0 = time.time()
+    print(f'updating some fields to numeric {(seconds_end0 - seconds_start0) :.1f} sec')
+
+    print(f'defining edges for extra graphs...')
+    seconds_start0 = time.time()
+
+    # create edge u -> v from u->w, v->w edges
+    # find edge_cols uw and vw
+    for k, value in extra_graphs.items():
+        ucol, vcol = k
+        ucol = vmap[ucol]
+        vcol = vmap[vcol]
+        wcol, weight_load = value
+        wcol = vmap[wcol]
+        s = f'FOR w IN {wcol}' \
+            f'  LET uset = (FOR u IN 1..1 INBOUND w {ucol}_{wcol}_edges RETURN u)' \
+            f'  LET vset = (FOR v IN 1..1 INBOUND w {vcol}_{wcol}_edges RETURN v)' \
+            f'  FOR u in uset' \
+            f'      FOR v in vset'
+        s_ins_ = ', '.join([f'{k}: w.{v}' for k, v in weight_load])
+        s_ins_ = f'_from: u._id, _to: v._id, {s_ins_}'
+        s_ins = f'          INSERT {{{s_ins_}}} '
+        s_last = f'IN {ucol}_{vcol}_edges'
+        query0 = s + s_ins + s_last
+        print(query0)
+        cursor = sys_db.aql.execute(query0)
+    seconds_end0 = time.time()
+    print(f'defined edges for extra graphs {(seconds_end0 - seconds_start0) :.1f} sec')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--datapath',
-                        default=expanduser('~/data/wos/wos_full/'),
+                        default=expanduser('../../data/toy'),
                         help='Path to data files')
 
     parser.add_argument('-i', '--id-addr',
@@ -320,7 +385,7 @@ if __name__ == "__main__":
                         help='number of symbols read from (archived) file for a single batch')
 
     parser.add_argument('--prefix',
-                        default='',
+                        default='toy_',
                         help='prefix for collection names')
 
     parser.add_argument('--modes',

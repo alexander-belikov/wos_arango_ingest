@@ -2,48 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="dd95ac76-09be-4379-a078-a8eae6a19bf4" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/data/toy/dummy_contributors.csv.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/toy/dummy_institutions.csv.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/toy/dummy_publications.csv.gz" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/toy/dummy_refs.csv.gz" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_profile_limit_10.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_profile_limit_100.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query1_profile_limit_100.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_profile_limit_1000.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query1_profile_limit_1000.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_profile_limit_10000.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_10.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_100.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_1000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_10000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_1000_batch_0.json.gz" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query1_result_limit_1000_batch_0.json.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_100_batch_0.json.gz" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query1_result_limit_100_batch_0.json.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query1_result_limit_100_batch_1.json.gz" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query1_result_limit_100_batch_1.json.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query2_profile_limit_100.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query2_profile_limit_100.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query2_profile_limit_1000.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query2_profile_limit_1000.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query2_result_limit_100.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query2_result_limit_1000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_10.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_100.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query4_profile_limit_100.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_1000.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query4_profile_limit_1000.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_10000.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_100000.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_profile_limit_1000000.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result_limit_10.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result_limit_100.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result_limit_1000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result_limit_10000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result_limit_100000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query4_result_limit_1000000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_profile.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_profile_limit_10.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_profile_limit_100.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query5_profile_limit_100.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_profile_limit_1000.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query5_profile_limit_1000.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_result.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_result_limit_10.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_result_limit_100.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query5_result_limit_1000.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query6_profile_limit_100.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query6_profile_limit_100.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query6_profile_limit_1000.json" beforeDir="false" afterPath="$PROJECT_DIR$/results/arango/query6_profile_limit_1000.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query6_result_limit_100.json.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/arango/query6_result_limit_1000.json.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/arango/ingest_wos_csv.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/ingest_wos_csv.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/arango/run_query.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/arango/run_query.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wos_db_studies/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/wos_db_studies/utils.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

@@ -59,6 +59,14 @@ def clear_first_level_nones(docs, keys_keep_nones=None):
     return docs
 
 
+def update_to_numeric(collection_name, field):
+    s1 = f'FOR p IN {collection_name} FILTER p.{field} update p with {{'
+    s2 = f'{field}: TO_NUMBER(p.{field}) '
+    s3 = f'}} in {collection_name}'
+    q0 = s1 + s2 + s3
+    return q0
+
+
 def upsert_docs_batch(docs, collection_name, match_keys, update_keys=None, filter_uniques=True):
     """
 
