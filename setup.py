@@ -7,7 +7,7 @@ def read(fname):
 
 
 setup(
-    name="datahelpers",
+    name="wos_db_studies",
     version="0.1",
     author="Alexander Belikov",
     author_email="abelikov@gmail.com",

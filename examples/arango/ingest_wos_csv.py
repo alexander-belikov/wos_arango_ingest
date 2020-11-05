@@ -19,7 +19,8 @@ def is_int(x):
     return True
 
 
-def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123',
+def main(fpath, port=8529, ip_addr='127.0.0.1', protocol="http",
+         cred_name='root', cred_pass='123',
          limit_files=None, max_lines=None, batch_size=50000000,
          modes=('publications', 'contributors', 'institutions', 'refs'),
          clean_start='all',
@@ -131,7 +132,7 @@ def main(fpath, port=8529, ip_addr='127.0.0.1', cred_name='root', cred_pass='123
 
     pprint(files_dict)
 
-    hosts = f'http://{ip_addr}:{port}'
+    hosts = f'{protocol}://{ip_addr}:{port}'
     client = ArangoClient(hosts=hosts)
 
     sys_db = client.db('_system', username=cred_name, password=cred_pass)
@@ -356,6 +357,10 @@ if __name__ == "__main__":
                         default='127.0.0.1', type=str,
                         help='port for arangodb connection')
 
+    parser.add_argument('--protocol',
+                        default='http', type=str,
+                        help='protocol for arangodb connection')
+
     parser.add_argument('-p', '--port',
                         default=8529, type=int,
                         help='port for arangodb connection')
@@ -420,13 +425,14 @@ if __name__ == "__main__":
     clean_start = args.clean_start
     id_addr = args.id_addr
     prefix = args.prefix
+    protocol = args.protocol
 
     if verbose:
         print(f'max_lines : {max_lines}; limit_files: {limit_files}')
         print(f'modes: {modes}')
         print(f'clean start: {clean_start}')
 
-    main(fpath, port, id_addr, cred_name, cred_pass,
+    main(fpath, port, id_addr, protocol, cred_name, cred_pass,
          limit_files, max_lines, batch_size,
          modes,
          clean_start,
