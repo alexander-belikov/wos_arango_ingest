@@ -2,7 +2,7 @@ import numpy as np
 from arango import ArangoClient
 from wos_db_studies.utils import profile_query
 import argparse
-from queries import qdict
+from .queries import qdict
 
 
 def str2bool(v):

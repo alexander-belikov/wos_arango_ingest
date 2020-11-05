@@ -1,11 +1,14 @@
 from arango import ArangoClient
 import argparse
+from os import environ
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--collection', default='all',
                     help='test setting')
 
 client = ArangoClient()
-sys_db = client.db('_system', username='root', password='123')
+cred_name = environ["ARANGO_UNAME"]
+cred_pass = environ["ARANGO_PASS"]
+sys_db = client.db('_system', username=cred_name, password=cred_pass)
 args = parser.parse_args()
 print(args)
 mode = args.collection

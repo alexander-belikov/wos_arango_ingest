@@ -1,18 +1,18 @@
 import time
-import argparse
-from os.path import join, expanduser
-from os import listdir
-from os.path import isfile, join
+from os.path import join, expanduser, isfile, join
+from os import listdir, environ
 import csv
 from arango import ArangoClient
 from wos_db_studies.utils import delete_collections, upsert_docs_batch, insert_edges_batch, clear_first_level_nones
 from wos_db_studies.chunker import Chunker
 
 
-fpath = expanduser('~/data/wos/wos_toy/')
+fpath = expanduser('../data/toy/')
 port = 8529
-cred_name = 'root'
-cred_pass = '123'
+cred_name = environ["ARANGO_UNAME"]
+cred_pass = environ["ARANGO_PASS"]
+# cred_name = 'root'
+# cred_pass = '123'
 limit_files = None
 max_lines = None
 batch_size = 50000000
