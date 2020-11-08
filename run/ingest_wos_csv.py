@@ -1,14 +1,17 @@
 import time
 import argparse
+import yaml
 from os.path import join, expanduser
 from os import listdir
 from os.path import isfile, join
 import csv
+from itertools import permutations
 from arango import ArangoClient
 from wos_db_studies.utils import (
     delete_collections,
     upsert_docs_batch,
     insert_edges_batch,
+    define_extra_edges,
 )
 from wos_db_studies.utils import clear_first_level_nones, update_to_numeric
 from wos_db_studies.chunker import Chunker
@@ -37,100 +40,115 @@ def main(
     modes=("publications", "contributors", "institutions", "refs"),
     clean_start="all",
     prefix="toy_",
+    config=None,
     verbose=True,
 ):
-
+    # vertex_type -> vertex_collection_name
     vmap = {
-        "pub": f"{prefix}publications",
-        "medium": f"{prefix}media",
-        "lang": f"{prefix}languages",
-        "contributor": f"{prefix}contributors",
-        "organization": f"{prefix}organizations",
+        k: f'{prefix}{v["basename"]}' for k, v in config["vertex_collections"].items()
     }
 
+    # vertex_collection_name -> field_definition
     index_fields_dict = {
-        vmap["pub"]: ["_key"],
-        vmap["medium"]: ["issn", "isbn", "title"],
-        vmap["lang"]: ["language"],
-        vmap["contributor"]: ["first_name", "last_name"],
-        vmap["organization"]: ["organization", "country", "city"],
+        vmap[k]: v["index"] for k, v in config["vertex_collections"].items()
     }
 
+    # vertex_collection_name -> extra_index
+    # in addition to index from field_definition
     extra_indices = {
-        vmap["pub"]: [
-            {"type": "hash", "unique": False, "fields": ["title"]},
-            {"type": "hash", "unique": False, "fields": ["year"]},
-        ],
-        vmap["medium"]: [{"type": "hash", "unique": False, "fields": ["issn"]},],
-        vmap["organization"]: [
-            {"type": "hash", "unique": False, "fields": ["country"]},
-        ],
+        vmap[k]: v["extra_index"]
+        for k, v in config["vertex_collections"].items()
+        if "extra_index" in v
     }
 
+    # vertex_collection_name -> fields_keep
     retrieve_fields_dict = {
-        vmap["pub"]: ["_key", "accession_no", "title", "year", "month", "day"],
-        vmap["medium"]: ["issn", "isbn", "title", "eissn", "eisbn"],
-        vmap["lang"]: ["language"],
-        vmap["contributor"]: ["first_name", "last_name"],
-        vmap["organization"]: ["organization", "country", "city"],
+        vmap[k]: v["fields"] for k, v in config["vertex_collections"].items()
     }
 
-    numeric_fields_dict = {vmap["pub"]: ["year", "month", "day"]}
-
-    pub_conv_main = {
-        "wos_id": "_key",
-        "pubyear": "year",
-        "pubmonth": "month",
-        "pubday": "day",
+    # vertex_collection_name -> fields_type
+    numeric_fields_dict = {
+        vmap[k]: v["numeric_fields"]
+        for k, v in config["vertex_collections"].items()
+        if "numeric_fields" in v
     }
-    pub_conv_ref = {"uid": "_key"}
-    medium_conv = {"source": "title"}
 
-    edges_def = [
-        (vmap["pub"], vmap["pub"], pub_conv_main, pub_conv_ref),
-        (vmap["pub"], vmap["medium"], pub_conv_main, medium_conv),
-        (vmap["pub"], vmap["lang"], pub_conv_main, {}),
-        (vmap["contributor"], vmap["pub"], {}, pub_conv_main),
-        (vmap["organization"], vmap["pub"], {}, pub_conv_main),
-    ]
+    #############################
+    # edge discovery
+
+    field_maps = {}
+    for item in config["table"]:
+        field_maps[item["filetype"]] = {
+            vmap[vc["type"]]: vc["map_fields"]
+            for vc in item["vertex_collections"]
+            if "map_fields" in vc
+        }
+
+    acc = []
+    for n in config["table"]:
+        for pa, pb in permutations(n["vertex_collections"], 2):
+            pa_map = pa["map_fields"] if "map_fields" in pa else {}
+            pb_map = pb["map_fields"] if "map_fields" in pb else {}
+            item = (pa["type"], pb["type"], pa_map, pb_map, n["filetype"])
+            acc += [item]
+
+    # [(vcol_a, vcol_b, map_table_vcol_a, map_table_vcol_b, table)]
+    edges_def = []
+    requested_edge_collections = config["edge_collections"].copy()
+    for item in acc:
+        a, b, _, _, _ = item
+        if [a, b] in requested_edge_collections:
+            edges_def += [(vmap[a], vmap[b], *item[2:])]
+            requested_edge_collections.remove([a, b])
+    edges_def = sorted(edges_def)
+
+    extra_edges = config["extra_edges"]
 
     graph = {}
+    modes2graphs = {}
     for uv in edges_def:
-        u, v, udict, vdict = uv
+        u, v, udict, vdict, table_source = uv
         graph_name = f"{u}_{v}_graph"
         ecollection_name = f"{u}_{v}_edges"
 
-        graph[graph_name] = u, v, ecollection_name, udict, vdict
+        graph[graph_name] = {
+            "source": u,
+            "target": v,
+            "edge_name": ecollection_name,
+            "source_map": udict,
+            "target_map": vdict,
+            "type": "direct",
+        }
 
-    modes2graphs_prep = {
-        "publications": [("pub", "medium"), ("pub", "lang")],
-        "contributors": [("contributor", "pub")],
-        "institutions": [("organization", "pub")],
-        "refs": [("pub", "pub")],
-    }
+        if table_source in modes2graphs:
+            modes2graphs[table_source] += [graph_name]
+        else:
+            modes2graphs[table_source] = [graph_name]
 
-    extra_graphs = {
-        ("contributor", "organization"): ["pub", [("wosid", "_key"), ("year", "year")]]
-    }
-
-    modes2graphs_ = {
-        k: [f"{vmap[from_]}_{vmap[to_]}_graph" for from_, to_ in v]
-        for k, v in modes2graphs_prep.items()
-    }
-
-    modes2graphs = {k: modes2graphs_[k] for k in modes if k in modes2graphs_.keys()}
+    for item in extra_edges:
+        u, v = vmap[item["source"]], vmap[item["target"]]
+        graph_name = f"{u}_{v}_graph"
+        ecollection_name = f"{u}_{v}_edges"
+        graph[graph_name] = {
+            "source": u,
+            "target": v,
+            "edge_name": ecollection_name,
+            "by": vmap[item["by"]],
+            "edge_weight": item["edge_weight"],
+            "type": "indirect",
+        }
 
     actual_graphs = [g for item in modes2graphs.values() for g in item]
 
     vcollections = list(
-        set([graph[g][0] for g in actual_graphs])
-        | set([graph[g][1] for g in actual_graphs])
+        set([graph[g]["source"] for g in actual_graphs])
+        | set([graph[g]["target"] for g in actual_graphs])
     )
 
-    ecollections = list(set([graph[g][2] for g in actual_graphs]))
+    ecollections = list(set([graph[g]["edge_name"] for g in actual_graphs]))
 
     if verbose:
-        print(graph)
+        pprint(graph)
 
     files_dict = {}
 
@@ -158,8 +176,13 @@ def main(
 
     if clean_start == "edges":
         for gname in actual_graphs:
-            vcol_from, vcol_to, edge_col, _, _ = graph[gname]
+            vcol_from, vcol_to, edge_col = (
+                graph[gname]["source"],
+                graph[gname]["target"],
+                graph[gname]["edge_name"],
+            )
             if verbose:
+                print("********************")
                 print(vcol_from, vcol_to, edge_col)
             if sys_db.has_graph(gname):
                 g = sys_db.graph(gname)
@@ -173,8 +196,14 @@ def main(
 
     if clean_start == "all":
         for gname in actual_graphs:
-            vcol_from, vcol_to, edge_col, _, _ = graph[gname]
-
+            vcol_from, vcol_to, edge_col = (
+                graph[gname]["source"],
+                graph[gname]["target"],
+                graph[gname]["edge_name"],
+            )
+            if verbose:
+                print("********************")
+                print(vcol_from, vcol_to, edge_col)
             if sys_db.has_graph(gname):
                 g = sys_db.graph(gname)
             else:
@@ -194,16 +223,6 @@ def main(
                 edge_collection=edge_col,
                 from_vertex_collections=[vcol_from],
                 to_vertex_collections=[vcol_to],
-            )
-
-        for uset, vset in extra_graphs.keys():
-            ucol = vmap[uset]
-            vcol = vmap[vset]
-            edge_col = f"{ucol}_{vcol}_edges"
-            _ = g.create_edge_definition(
-                edge_collection=edge_col,
-                from_vertex_collections=[ucol],
-                to_vertex_collections=[vcol],
             )
 
         # add secondary indices:
@@ -241,8 +260,18 @@ def main(
                     ]
 
                     for g in modes2graphs[mode]:
+                        if graph[g]["type"] != "direct":
+                            pass
 
-                        vfrom, vto, ecol, vfrom_dict, vto_dict = graph[g]
+                        vfrom, vto, ecol = (
+                            graph[g]["source"],
+                            graph[g]["target"],
+                            graph[g]["edge_name"],
+                        )
+                        vfrom_dict, vto_dict = (
+                            graph[g]["source_map"],
+                            graph[g]["target_map"],
+                        )
 
                         seconds0 = time.time()
                         if verbose:
@@ -352,7 +381,6 @@ def main(
                             index_fields_dict[vto],
                             False,
                         )
-                        # print(query0)
                         cursor = sys_db.aql.execute(query0)
 
                         seconds3 = time.time()
@@ -386,28 +414,12 @@ def main(
 
     # create edge u -> v from u->w, v->w edges
     # find edge_cols uw and vw
-    for k, value in extra_graphs.items():
-        ucol, vcol = k
-        ucol = vmap[ucol]
-        vcol = vmap[vcol]
-        wcol, weight_load = value
-        wcol = vmap[wcol]
-        s = (
-            f"FOR w IN {wcol}"
-            f"  LET uset = (FOR u IN 1..1 INBOUND w {ucol}_{wcol}_edges RETURN u)"
-            f"  LET vset = (FOR v IN 1..1 INBOUND w {vcol}_{wcol}_edges RETURN v)"
-            f"  FOR u in uset"
-            f"      FOR v in vset"
-        )
-        s_ins_ = ", ".join([f"{k}: w.{v}" for k, v in weight_load])
-        s_ins_ = f"_from: u._id, _to: v._id, {s_ins_}"
-        s_ins = f"          INSERT {{{s_ins_}}} "
-        s_last = f"IN {ucol}_{vcol}_edges"
-        query0 = s + s_ins + s_last
-        print(query0)
-        cursor = sys_db.aql.execute(query0)
+    for gname, item in graph.items():
+        if item["type"] == "indirect":
+            query0 = define_extra_edges(item)
+            cursor = sys_db.aql.execute(query0)
     seconds_end0 = time.time()
-    print(f"defined edges for extra graphs {(seconds_end0 - seconds_start0) :.1f} sec")
+    print(f"defined edges for extra graphs {(seconds_end0 - seconds_start0) :.4f} sec")
 
 
 if __name__ == "__main__":
@@ -488,6 +500,10 @@ if __name__ == "__main__":
         help='"all" to wipe all the collections, "edges" to wipe only edges',
     )
 
+    parser.add_argument(
+        "--config-path", type=str, default="../conf/wos.yaml", help="",
+    )
+
     args = parser.parse_args()
 
     if is_int(args.limit_files):
@@ -516,6 +532,9 @@ if __name__ == "__main__":
 
     prefix = args.prefix
 
+    with open(args.config_path, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
     if verbose:
         print(f"max_lines : {max_lines}; limit_files: {limit_files}")
         print(f"modes: {modes}")
@@ -535,5 +554,6 @@ if __name__ == "__main__":
         modes,
         clean_start,
         prefix,
+        config,
         verbose,
     )

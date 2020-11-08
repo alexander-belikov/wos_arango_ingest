@@ -33,13 +33,15 @@ map_type2shape = {
     "table": "box",
     "vcollection": "ellipse",
     "index": "polygon",
+    "def_field": "trapezium",
     "field": "octagon",
 }
 map_type2color = {
     "table": fillcolor_palette["blue"],
     "vcollection": fillcolor_palette["green"],
     "index": "orange",
-    "field": fillcolor_palette["red"],
+    "def_field": fillcolor_palette["red"],
+    "field": fillcolor_palette["violet"],
 }
 
 edge_status = {"vcollection": "dashed", "table": "solid"}
@@ -52,7 +54,7 @@ with open(fname, "r") as f:
 
 
 #######################################################
-g = nx.DiGraph()
+g = nx.MultiDiGraph()
 nodes = []
 edges = []
 for n in config["table"]:
@@ -70,21 +72,24 @@ g.add_edges_from(edges)
 
 for n in g.nodes():
     props = g.nodes()[n]
-    upd_dict = {
-        #                 "fillcolor": ,
-        "shape": map_type2shape[props["type"]],
-        "color": map_type2color[props["type"]],
-        "style": "filled",
-    }
+
+    upd_dict = props.copy()
+    if "type" in upd_dict:
+        upd_dict["shape"] = map_type2shape[props["type"]]
+        upd_dict["color"] = map_type2color[props["type"]]
+    if "label" in upd_dict:
+        upd_dict["forcelabel"] = True
+    upd_dict["style"] = "filled"
     for k, v in upd_dict.items():
         g.nodes[n][k] = v
 
-for e in g.edges(data=True):
-    s, t, _ = e
+
+for e in g.edges(keys=True, data=True):
+    s, t, kk, _ = e
     target_props = g.nodes[s]
     upd_dict = {"style": edge_status[target_props["type"]], "arrowhead": "vee"}
     for k, v in upd_dict.items():
-        g.edges[s, t][k] = v
+        g.edges[s, t, kk][k] = v
 
 ag = nx.nx_agraph.to_agraph(g)
 ag.draw(os.path.join(figgpath, "./tables2vertex.pdf"), "pdf", prog="dot")
@@ -98,7 +103,9 @@ for n in config["table"]:
         (item["type"], {"type": "vcollection"}) for item in n["vertex_collections"]
     ]
     nodes += nodes_collection
-    edges += [(x, y) for x, y in n["edge_collection"]]
+
+# for e in config["edge_collections"]:
+edges += [(x, y) for x, y in config["edge_collections"]]
 
 g.add_nodes_from(nodes)
 g.add_edges_from(edges)
@@ -193,6 +200,8 @@ for n in config["table"]:
         fields_collection_complementary = set(ref_fields) - set(cmap.values())
         cmap.update({qq: qq for qq in list(fields_collection_complementary)})
 
+        index_fields = config["vertex_collections"][cname]["index"]
+
         #         pprint(k)
         #         pprint(fields_collection_complementary)
         #         pprint(cname)
@@ -206,7 +215,10 @@ for n in config["table"]:
             (f"table:field:{kk}", {"type": "field", "label": kk}) for kk in cmap.keys()
         ]
         nodes_fields_collection = [
-            (f"collection:field:{kk}", {"type": "field", "label": kk})
+            (
+                f"collection:field:{kk}",
+                {"type": "def_field" if kk in index_fields else "field", "label": kk},
+            )
             for kk in cmap.values()
         ]
         edges_fields = [
@@ -250,4 +262,11 @@ for e in g.edges(data=True):
         g.edges[s, t][k] = v
 
 ag = nx.nx_agraph.to_agraph(g)
+
+for k, props in config["vertex_collections"].items():
+    level_index = [f"collection:field:{item}" for item in props["index"]]
+    index_subgraph = ag.add_subgraph(level_index, name=f"cluster_{k[:3]}:def")
+    index_subgraph.node_attr["style"] = "filled"
+    index_subgraph.node_attr["label"] = "definition"
+
 ag.draw(os.path.join(figgpath, "./tables2vertex_ext.pdf"), "pdf", prog="dot")

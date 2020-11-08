@@ -2,13 +2,9 @@ from arango import ArangoClient
 import gzip
 from os.path import join, expanduser
 import time
-from pprint import pprint
 import json
 
 seconds = time.time()
-port = 8529
-cred_name = "root"
-cred_pass = "123"
 
 gr_name = "wos_csv"
 
@@ -223,3 +219,36 @@ def profile_query(query, nq, profile_times, fpath, limit=None, **kwargs):
         ) as fp:
             chunk = list(cursor.fetch()["batch"])
             json.dump(chunk, fp, indent=4)
+
+
+def define_extra_edges(g):
+    """
+    g create a query from u to v by w : u -> w -> v and add properties of w as properties of the edge
+
+    {
+        "source": u,
+        "target": v,
+        "by": w,
+        "edge_name": ecollection_name,
+        "edge_weight": item["edge_weight"],
+        "type": "indirect"
+    }
+
+    :param g:
+    :return:
+    """
+    ucol, vcol, wcol = g["source"], g["target"], g["by"]
+    edge_weight = g["edge_weight"]
+    s = (
+        f"FOR w IN {wcol}"
+        f"  LET uset = (FOR u IN 1..1 INBOUND w {ucol}_{wcol}_edges RETURN u)"
+        f"  LET vset = (FOR v IN 1..1 INBOUND w {vcol}_{wcol}_edges RETURN v)"
+        f"  FOR u in uset"
+        f"      FOR v in vset"
+    )
+    s_ins_ = ", ".join([f"{v}: w.{k}" for k, v in edge_weight.items()])
+    s_ins_ = f"_from: u._id, _to: v._id, {s_ins_}"
+    s_ins = f"          INSERT {{{s_ins_}}} "
+    s_last = f"IN {ucol}_{vcol}_edges"
+    query0 = s + s_ins + s_last
+    return query0
