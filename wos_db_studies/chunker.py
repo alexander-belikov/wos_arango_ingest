@@ -7,14 +7,14 @@ class Chunker:
         self.j = 0
         self.batch_size = batch_size
         self.n_lines_max = n_lines_max
-        if fname[-2:] == 'gz':
-            self.file_obj = gzip.open(fname, 'rt')
+        if fname[-2:] == "gz":
+            self.file_obj = gzip.open(fname, "rt")
         else:
-            self.file_obj = open(fname, 'rt')
+            self.file_obj = open(fname, "rt")
         self.done = False
 
     def pop_header(self):
-        return self.file_obj.readline().rstrip('\n')
+        return self.file_obj.readline().rstrip("\n")
 
     def pop(self):
         if not self.n_lines_max or (self.n_lines_max and self.j < self.n_lines_max):

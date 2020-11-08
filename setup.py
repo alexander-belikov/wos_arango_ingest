@@ -22,5 +22,5 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: BSD License",
     ],
-    install_requires=['python-arango==5.2.1']
+    install_requires=["python-arango==5.2.1", "pyyaml", "networkx", "pandas"]
 )

@@ -1,4 +1,4 @@
-Python package for ingesting the Web of Science data into ArangdoDB (, Mysql, MongoDB)
+Python package for ingesting the Web of Science (WOS) data into ArangoDB (and testing vs Mysql, MongoDB(?))
  
 
 Installation
@@ -9,5 +9,7 @@ To install clone the repository and use
 
 Remarks
 -------
+
+
 
 
