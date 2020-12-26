@@ -80,8 +80,7 @@ def upsert_docs_batch(
 
     if isinstance(docs, list):
         if filter_uniques:
-            docs = {json.dumps(d, sort_keys=True) for d in docs}
-            docs = [json.loads(t) for t in docs]
+            docs = pick_unique_dict(docs)
         docs = json.dumps(docs)
     upsert_line = ", ".join([f'"{k}": doc.{k}' for k in match_keys])
     upsert_line = f"{{{upsert_line}}}"
@@ -123,8 +122,7 @@ def insert_edges_batch(
     example = docs_edges[0]
     if isinstance(docs_edges, list):
         if filter_uniques:
-            docs_edges = {json.dumps(d, sort_keys=True) for d in docs_edges}
-            docs_edges = [json.loads(t) for t in docs_edges]
+            docs_edges = pick_unique_dict(docs_edges)
         docs_edges = json.dumps(docs_edges)
 
     if match_keys_source[0] == "_key":
@@ -252,3 +250,9 @@ def define_extra_edges(g):
     s_last = f"IN {ucol}_{vcol}_edges"
     query0 = s + s_ins + s_last
     return query0
+
+
+def pick_unique_dict(docs):
+    docs = {json.dumps(d, sort_keys=True) for d in docs}
+    docs = [json.loads(t) for t in docs]
+    return docs

@@ -1,0 +1,220 @@
+json:
+    type: item
+    edges:
+        -
+            how: all
+            source:
+                name: publication
+                ufield: _key
+            target:
+                name: contributor
+        -   how: 1-n
+            source:
+                name: contributor
+                field: addr_no
+                type: list
+                all_value: 0
+            target:
+                name: organization
+                field: addr_no
+                type: value
+        -   how: all
+            source:
+                name: publication
+                ufield: _key
+            target:
+                name: medium
+
+    maps:
+        -
+            how: dict
+            name: publication
+            map:
+                id: _key
+        -   type: item
+            descend_key: properties
+            maps:
+                -   how: dict
+                    name: publication
+                    map:
+                        item_title: title
+#                        begin: first_page
+#                        end: last_page
+#                        range: range
+                -   how: dict
+                    name: medium
+                    map:
+                        source_title: title
+                        issn: issn
+                        eissn: eissn
+                        isbn: isbn
+                        eisbn: eisbn
+        -
+            type: item
+            descend_key: date
+            maps:
+                -
+                    how: dict
+                    name: date
+                    map:
+                        year: year
+                        month: month
+                        day: day
+        -
+            type: list
+            descend_key: addresses
+            maps:
+                -
+                    type: item
+                    edges:
+                        -
+                            how: all
+                            source:
+                                name: organization
+                            target:
+                                name: organization_pref
+                    maps:
+                        -
+                            how: dict
+                            name: organization
+                            map:
+                                country: country
+                                city: city
+                                state: state
+                                zip: zip
+                                street: street
+                                addr_no: addr_no
+                        -
+                            type: list
+                            descend_key: organizations_pref
+                            maps:
+                                -
+                                    how: value
+                                    name: organization_pref
+                                    key: name
+        -
+            type: list
+            descend_key: authors
+            maps:
+                -
+                    how: dict
+                    name: contributor
+                    map:
+                        first_name: first_name
+                        last_name: last_name
+                        email_addr: email
+                        wos_standard: wos_standard
+                        addr_no: addr_no
+
+
+vertex_collections:
+    publication:
+        basename: publications
+        fields:
+            - _key
+            - accession_no
+            - title
+            - year
+            - month
+            - day
+            - volume
+            - issue
+            - pubtype
+        numeric_fields:
+            - year
+            - month
+            - day
+        index:
+            - _key
+        extra_index:
+            -
+                type: hash
+                unique: false
+                fields:
+                    - title
+            -
+                type: hash
+                unique: false
+                fields:
+                    - year
+    medium:
+        basename: media
+        fields:
+            - issn
+            - isbn
+            - title
+            - eissn
+            - eisbn
+        index:
+            - issn
+            - isbn
+            - title
+        extra_index:
+            -
+                type: hash
+                unique: false
+                fields:
+                    - issn
+    language:
+        basename: languages
+        fields:
+            - language
+        index:
+            - language
+    contributor:
+        basename: contributors
+        fields:
+            - first_name
+            - last_name
+            - email
+            - display_name
+            - wos_standard
+        index:
+            - first_name
+            - last_name
+            - email
+    organization:
+        basename: organizations
+        fields:
+            - organization
+            - country
+            - city
+        index:
+            - organization
+            - country
+            - city
+        extra_index:
+            -
+                type: hash
+                unique: false
+                fields:
+                    - country
+    organization_pref:
+        basename: organization_pref
+        fields:
+            - name
+        index:
+            - name
+    date:
+        basename: date
+        fields:
+            - year
+            - month
+            - day
+        index:
+            - year
+            - month
+            - day
+        extra_index:
+            -   type: hash
+                unique: false
+                fields:
+                    - year
+extra_edges:
+    -
+        source: contributor
+        target: organization
+        by: publication
+        edge_weight:
+            _key: pubid
+            year: year
