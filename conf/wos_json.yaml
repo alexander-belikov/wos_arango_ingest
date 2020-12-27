@@ -3,52 +3,195 @@ json:
     edges:
         -
             how: all
-            source:
-                name: publication
-                ufield: _key
             target:
+                name: publication
+                anchor: True
+                fields:
+                    - anchor
+            source:
                 name: contributor
+                anchor: True
+                fields:
+                    - seq_no
+                    - role
         -   how: 1-n
             source:
                 name: contributor
                 field: addr_no
+                anchor: True
                 type: list
                 all_value: 0
             target:
-                name: organization
+                name: address
                 field: addr_no
                 type: value
         -   how: all
             source:
                 name: publication
-                ufield: _key
+                anchor: True
+                fields:
+                    - anchor
             target:
+                name: date
+                anchor: True
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+                fields:
+                    - anchor
+            target:
+                anchor: True
                 name: medium
-
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+                fields:
+                    - anchor
+            target:
+                name: title
+                anchor: True
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: language
+                fields:
+                    - primary
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: heading
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: subheading
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: document_type
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: subject
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: edition
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: publication_type
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: publication
+                anchor: False
     maps:
         -
             how: dict
             name: publication
+            __extra:
+                anchor: true
             map:
                 id: _key
         -   type: item
             descend_key: properties
             maps:
                 -   how: dict
+                    name: publication_type
+                    map:
+                        pubtype: name
+                -   how: dict
                     name: publication
                     map:
+                        vol: volume
+                        issue: issue
+                        accession_no: accession_no
+                        has_abstract: has_abstract
+                -   how: dict
+                    name: title
+                    __extra:
+                        anchor: True
+                    map:
                         item_title: title
-#                        begin: first_page
-#                        end: last_page
-#                        range: range
                 -   how: dict
                     name: medium
+                    __extra:
+                        anchor: True
                     map:
                         source_title: title
                         issn: issn
                         eissn: eissn
                         isbn: isbn
                         eisbn: eisbn
+                -   type: item
+                    descend_key: page_info
+                    maps:
+                        -   how: dict
+                            name: publication
+                            map:
+                                begin: first_page
+                                end: last_page
+                                range: range
+                -   how: dict
+                    name: language
+                    map:
+                        primary_language: language
+                    __extra:
+                        primary: True
+                -   type: list
+                    descend_key: languages
+                    maps:
+                        -   how: value
+                            name: language
+                            key: language
+                -   type: list
+                    descend_key: doctype
+                    maps:
+                        -   how: value
+                            name: document_type
+                            key: name
+                -   type: list
+                    descend_key: headings
+                    maps:
+                        -   how: value
+                            name: heading
+                            key: name
+                -   type: list
+                    descend_key: subheadings
+                    maps:
+                        -   how: value
+                            name: subheading
+                            key: name
+                -   type: list
+                    descend_key: subjects
+                    maps:
+                        -   how: value
+                            name: subject
+                            key: name
+                -   type: list
+                    descend_key: editions
+                    maps:
+                        -   how: value
+                            name: edition
+                            key: edition
         -
             type: item
             descend_key: date
@@ -56,10 +199,66 @@ json:
                 -
                     how: dict
                     name: date
+                    __extra:
+                        anchor: True
                     map:
                         year: year
                         month: month
                         day: day
+        -
+            type: list
+            descend_key: references
+            maps:
+                -
+                    type: item
+                    edges:
+                        -
+                            how: all
+                            source:
+                                name: publication
+                            target:
+                                name: date
+                        -   how: all
+                            source:
+                                name: publication
+                            target:
+                                name: title
+                        -   how: all
+                            source:
+                                name: publication
+                            target:
+                                name: medium
+                        -   how: all
+                            source:
+                                name: contributor
+                            target:
+                                name: publication
+                    maps:
+                        -
+                            how: dict
+                            name: publication
+                            map:
+                                uid: _key
+                                doi: doi
+                                page: first_page
+                                volume: volume
+                        -   how: dict
+                            name: date
+                            map:
+                                year: year
+                        -   how: dict
+                            name: title
+                            map:
+                                citedTitle: title
+                        -   how: dict
+                            name: medium
+                            map:
+                                citedWork: title
+                        -   how: dict
+                            name: contributor
+                            map:
+                                citedAuthor: wos_standard
+
         -
             type: list
             descend_key: addresses
@@ -70,13 +269,18 @@ json:
                         -
                             how: all
                             source:
-                                name: organization
+                                name: address
                             target:
                                 name: organization_pref
+                        -   how: all
+                            source:
+                                name: address
+                            target:
+                                name: organization
                     maps:
                         -
                             how: dict
-                            name: organization
+                            name: address
                             map:
                                 country: country
                                 city: city
@@ -84,6 +288,7 @@ json:
                                 zip: zip
                                 street: street
                                 addr_no: addr_no
+                                full_address: full_address
                         -
                             type: list
                             descend_key: organizations_pref
@@ -92,6 +297,12 @@ json:
                                     how: value
                                     name: organization_pref
                                     key: name
+                        -   type: list
+                            descend_key: organizations
+                            maps:
+                                -   how: value
+                                    name: organization
+                                    key: name
         -
             type: list
             descend_key: authors
@@ -99,12 +310,16 @@ json:
                 -
                     how: dict
                     name: contributor
+                    __extra:
+                        anchor: True
                     map:
                         first_name: first_name
                         last_name: last_name
                         email_addr: email
                         wos_standard: wos_standard
                         addr_no: addr_no
+                        seq_no : seq_no
+                        role: role
 
 
 vertex_collections:
@@ -161,6 +376,12 @@ vertex_collections:
             - language
         index:
             - language
+    edition:
+        basename: editions
+        fields:
+            - edition
+        index:
+            - edition
     contributor:
         basename: contributors
         fields:
@@ -170,33 +391,72 @@ vertex_collections:
             - display_name
             - wos_standard
         index:
+            - wos_standard
             - first_name
             - last_name
             - email
-    organization:
-        basename: organizations
+    address:
+        basename: addresses
         fields:
-            - organization
             - country
+            - state
             - city
+            - zip
         index:
-            - organization
             - country
+            - state
             - city
+            - zip
         extra_index:
             -
                 type: hash
                 unique: false
                 fields:
                     - country
+    organization:
+        basename: organizations
+        fields:
+            - name
+        index:
+            - name
     organization_pref:
         basename: organization_pref
         fields:
             - name
         index:
             - name
+    publication_type:
+        basename: publication_types
+        fields:
+            - name
+        index:
+            - name
+    document_type:
+        basename: document_types
+        fields:
+            - name
+        index:
+            - name
+    subject:
+        basename: subjects
+        fields:
+            - name
+        index:
+            - name
+    heading:
+        basename: headings
+        fields:
+            - name
+        index:
+            - name
+    subheading:
+        basename: subheadings
+        fields:
+            - name
+        index:
+            - name
     date:
-        basename: date
+        basename: dates
         fields:
             - year
             - month
@@ -210,6 +470,12 @@ vertex_collections:
                 unique: false
                 fields:
                     - year
+    title:
+        basename: titles
+        fields:
+            - title
+        index:
+            - title
 extra_edges:
     -
         source: contributor
