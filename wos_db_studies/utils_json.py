@@ -1,6 +1,7 @@
 from itertools import product
 from collections import defaultdict, ChainMap
 from .utils import pick_unique_dict
+from pprint import pprint
 
 
 def apply_mapper(mapper, document, vertex_indices):

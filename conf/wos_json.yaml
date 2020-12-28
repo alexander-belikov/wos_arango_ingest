@@ -38,6 +38,18 @@ json:
             source:
                 name: publication
                 anchor: True
+            target:
+                name: publisher
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: conference
+        -   how: all
+            source:
+                name: publication
+                anchor: True
                 fields:
                     - anchor
             target:
@@ -83,7 +95,37 @@ json:
                 name: publication
                 anchor: True
             target:
+                name: keyword_plus
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: keyword
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
                 name: subject
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: agency
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: grant_id
+        -   how: all
+            source:
+                name: publication
+                anchor: True
+            target:
+                name: abstract
         -   how: all
             source:
                 name: publication
@@ -114,6 +156,89 @@ json:
         -   type: item
             descend_key: properties
             maps:
+                -   type: list
+                    descend_key: conferences
+                    maps:
+                        -   type: item
+                            edges:
+                                -   how: all
+                                    source:
+                                        name: conference
+                                    target:
+                                        name: conference_title
+                                -   how: all
+                                    source:
+                                        name: conference
+                                    target:
+                                        name: conference_info
+                                -   how: all
+                                    source:
+                                        name: conference
+                                    target:
+                                        name: conference_sponsor
+                                -   how: all
+                                    source:
+                                        name: conference
+                                    target:
+                                        name: location
+                                -   how: all
+                                    source:
+                                        name: conference
+                                    target:
+                                        name: date
+                            maps:
+                                -   how: dict
+                                    name: conference
+                                    map:
+                                        conf_id: id
+                                -   type: list
+                                    descend_key: infos
+                                    maps:
+                                        -   how: value
+                                            name: conference_info
+                                            key: name
+                                -   type: list
+                                    descend_key: titles
+                                    maps:
+                                        -   how: value
+                                            name: conference_title
+                                            key: name
+                                -   type: list
+                                    descend_key: sponsors
+                                    maps:
+                                        -   how: value
+                                            name: conference_sponsor
+                                            key: name
+                                -   type: list
+                                    descend_key: locations
+                                    maps:
+                                        -   how: dict
+                                            name: location
+                                            map:
+                                                conf_city: city
+                                                conf_state: state
+                                                conf_host: host
+                                -   type: list
+                                    descend_key: dates
+                                    maps:
+                                        -   type: item
+                                            descend_key: conf_start
+                                            maps:
+                                                -   how: dict
+                                                    name: date
+                                                    map:
+                                                        year: year
+                                                        month: month
+                                                        day: day
+                                        -   type: item
+                                            descend_key: conf_end
+                                            maps:
+                                                -   how: dict
+                                                    name: date
+                                                    map:
+                                                        year: year
+                                                        month: month
+                                                        day: day
                 -   how: dict
                     name: publication_type
                     map:
@@ -125,6 +250,7 @@ json:
                         issue: issue
                         accession_no: accession_no
                         has_abstract: has_abstract
+                        fund_text: funding_text
                 -   how: dict
                     name: title
                     __extra:
@@ -181,6 +307,37 @@ json:
                             name: subheading
                             key: name
                 -   type: list
+                    descend_key: keywords_plus
+                    maps:
+                        -   how: value
+                            name: keyword_plus
+                            key: name
+                -   type: list
+                    descend_key: keywords
+                    maps:
+                        -   how: value
+                            name: keyword
+                            key: name
+                -   type: list
+                    descend_key: abstracts
+                    maps:
+                        -   how: value
+                            name: abstract
+                            key: name
+                -   type: list
+                    descend_key: grant_agencies
+                    maps:
+                        -   how: dict
+                            name: agency
+                            map:
+                                agency: name
+                        -   type: list
+                            descend_key: grant_ids
+                            maps:
+                                -   how: value
+                                    name: grant_id
+                                    key: name
+                -   type: list
                     descend_key: subjects
                     maps:
                         -   how: value
@@ -191,7 +348,7 @@ json:
                     maps:
                         -   how: value
                             name: edition
-                            key: edition
+                            key: name
         -
             type: item
             descend_key: date
@@ -258,7 +415,42 @@ json:
                             name: contributor
                             map:
                                 citedAuthor: wos_standard
-
+        -
+            type: list
+            descend_key: publishers
+            maps:
+                -
+                    type: item
+                    edges:
+                        -   how: 1-n
+                            source:
+                                name: publisher
+                                field: addr_no
+                                type: list
+                                all_value: 0
+                            target:
+                                name: address
+                                field: addr_no
+                                type: value
+                    maps:
+                        -
+                            type: list
+                            descend_key: names
+                            maps:
+                                -   how: dict
+                                    name: publisher
+                                    map:
+                                        display_name: name
+                                        addr_no: addr_no
+                        -   type: list
+                            descend_key: addresses
+                            maps:
+                                -   how: dict
+                                    name: address
+                                    map:
+                                        address: full_address
+                                        city: city
+                                        addr_no: addr_no
         -
             type: list
             descend_key: addresses
@@ -334,7 +526,7 @@ vertex_collections:
             - day
             - volume
             - issue
-            - pubtype
+            - funding_text
         numeric_fields:
             - year
             - month
@@ -376,12 +568,6 @@ vertex_collections:
             - language
         index:
             - language
-    edition:
-        basename: editions
-        fields:
-            - edition
-        index:
-            - edition
     contributor:
         basename: contributors
         fields:
@@ -443,6 +629,42 @@ vertex_collections:
             - name
         index:
             - name
+    keyword:
+        basename: keywords
+        fields:
+            - name
+        index:
+            - name
+    keyword_plus:
+        basename: keywords_plus
+        fields:
+            - name
+        index:
+            - name
+    edition:
+        basename: editions
+        fields:
+            - name
+        index:
+            - name
+    abstract:
+        basename: abstracts
+        fields:
+            - name
+        index:
+            - name
+    agency:
+        basename: headings
+        fields:
+            - name
+        index:
+            - name
+    grant_id:
+        basename: grant_ids
+        fields:
+            - name
+        index:
+            - name
     heading:
         basename: headings
         fields:
@@ -476,6 +698,46 @@ vertex_collections:
             - title
         index:
             - title
+    publisher:
+        basename: publishers
+        fields:
+            - name
+        index:
+            - name
+    conference:
+        basename: conferences
+        fields:
+            - id
+        index:
+            - id
+    conference_title:
+        basename: conference_titles
+        fields:
+            - name
+        index:
+            - name
+    conference_info:
+        basename: conference_infos
+        fields:
+            - name
+        index:
+            - name
+    conference_sponsor:
+        basename: conference_sponsors
+        fields:
+            - name
+        index:
+            - name
+    location:
+        basename: locations
+        fields:
+            - city
+            - state
+            - host
+        index:
+            - city
+            - state
+            - host
 extra_edges:
     -
         source: contributor
