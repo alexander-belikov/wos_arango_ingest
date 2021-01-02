@@ -1,5 +1,17 @@
 json:
     type: item
+    weights:
+        -
+            source:
+                name: contributor
+            target:
+                name: publication
+            vertex:
+                -
+                    name: publication
+                    condition:
+                        anchor: True
+                    field: _key
     edges:
         -
             how: all
@@ -358,6 +370,8 @@ json:
                                 name: contributor
                             target:
                                 name: publication
+                            values:
+                                reference: True
                     maps:
                         -
                             how: dict

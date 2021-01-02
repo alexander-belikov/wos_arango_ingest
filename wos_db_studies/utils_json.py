@@ -76,6 +76,9 @@ def apply_mapper(mapper, document, vertex_spec):
             if "edges" in mapper:
                 # check update
                 agg = add_edges(mapper, agg, vertex_spec)
+            if "weights" in mapper:
+                # check update
+                agg = add_weights(mapper, agg)
             if "merge" in mapper:
                 for item in mapper["merge"]:
                     agg = smart_merge(agg, item["name"],
@@ -89,6 +92,28 @@ def apply_mapper(mapper, document, vertex_spec):
             )
     else:
         raise KeyError("Mapper type has does not have either how or type keys")
+
+
+def add_weights(mapper, agg):
+    for edge_def in mapper["weights"]:
+        source, target = (
+            edge_def["source"]["name"],
+            edge_def["target"]["name"],
+        )
+        edges = agg[(source, target)]
+
+        if "vertex" in edge_def:
+            for item in edge_def["vertex"]:
+                c = item["condition"]
+                vs = [doc for doc in agg[item["name"]] if all([q in doc for q in c])]
+                if vs:
+                    doc = vs[0]
+                    flag = all([doc[k] == v for k, v in c.items()])
+                    if flag:
+                        for u, v, weight in edges:
+                            weight.update({item["name"]: doc[item["field"]]})
+        agg[(source, target)] = edges
+    return agg
 
 
 def add_edges(mapper, agg, vertex_indices):
@@ -121,6 +146,8 @@ def add_edges(mapper, agg, vertex_indices):
                     weight.update({k: u[k] for k in edge_def["source"]["fields"] if k in u})
                 if "fields" in edge_def["target"]:
                     weight.update({k: v[k] for k in edge_def["target"]["fields"] if k in v})
+                if "values" in edge_def:
+                    weight.update({k: v for k, v in edge_def["values"].items()})
                 agg[(source, target)] += [
                     (
                         project_dict(u, source_index),
