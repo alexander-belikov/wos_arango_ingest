@@ -1,10 +1,11 @@
 from itertools import product
 from collections import defaultdict, ChainMap
 from .utils import pick_unique_dict
+import importlib
 from pprint import pprint
 
 
-def apply_mapper(mapper, document, vertex_indices):
+def apply_mapper(mapper, document, vertex_spec):
     if "how" in mapper:
         mode = mapper["how"]
         vcol = mapper["name"]
@@ -14,19 +15,38 @@ def apply_mapper(mapper, document, vertex_indices):
             extra_dict = {}
         # value is a dict
         if mode == "dict":
-            field_map = mapper["map"]
-            return {
-                vcol: [
-                    {
-                        **{
+            if "map" in mapper:
+                field_map = mapper["map"]
+                mapped_part = {
                             v: document[k]
                             for k, v in field_map.items()
                             if k in document
-                        },
-                        **extra_dict
-                        # **{k: v for k, v in document.items() if k not in field_map},
+                        }
+            else:
+                field_map = dict()
+                mapped_part = {}
+            # vcol_fields = set(vertex_spec[vcol]["fields"]) - set(field_map.values())
+            vcol_fields = vertex_spec[vcol]["fields"]
+            def_part =  {k: document[k]
+                         for k in vcol_fields
+                         if k in document}
+            result = {
+                        **mapped_part, **def_part,
+                        **extra_dict,
                     }
-                ]
+            if "transforms" in vertex_spec[vcol]:
+                for transform in vertex_spec[vcol]["transforms"]:
+                    if "module" in transform:
+                        module = importlib.import_module(transform["module"])
+                    elif "class" in transform:
+                        module = eval('str')
+                    else:
+                        raise KeyError("Either module or class keys should be present")
+                    fields = transform["fields"]
+                    foo = getattr(module, transform["foo"])
+                    result = {k: (foo(v) if k in fields else v) for k, v in result.items()}
+            return {
+                vcol: [result]
             }
         elif mode == "value":
             key = mapper["key"]
@@ -44,17 +64,24 @@ def apply_mapper(mapper, document, vertex_indices):
         if mapper["type"] == "list":
             for cdoc in document:
                 for m in mapper["maps"]:
-                    item = apply_mapper(m, cdoc, vertex_indices)
+                    item = apply_mapper(m, cdoc, vertex_spec)
                     for k, v in item.items():
                         agg[k] += v
             return agg
         elif mapper["type"] == "item":
             for m in mapper["maps"]:
-                item = apply_mapper(m, document, vertex_indices)
+                item = apply_mapper(m, document, vertex_spec)
                 for k, v in item.items():
                     agg[k] += v
             if "edges" in mapper:
-                agg = add_edges(mapper, agg, vertex_indices)
+                # check update
+                agg = add_edges(mapper, agg, vertex_spec)
+            if "merge" in mapper:
+                for item in mapper["merge"]:
+                    agg = smart_merge(agg, item["name"],
+                                      item["discriminator_key"],
+                                      item["discriminator_value"],
+                                      )
             return agg
         else:
             raise ValueError(
@@ -72,7 +99,7 @@ def add_edges(mapper, agg, vertex_indices):
             edge_def["target"]["name"],
         )
         # get source and target edge fields
-        source_index, target_index = vertex_indices[source], vertex_indices[target]
+        source_index, target_index = vertex_indices[source]["index"], vertex_indices[target]["index"]
 
         # if "fields" in edge_def["source"]:
         #     source_index += edge_def["source"]["fields"]
@@ -137,19 +164,19 @@ def add_edges(mapper, agg, vertex_indices):
     return agg
 
 
-def pick_indexed_items_anchor_logic(items, indices, set_spec):
+def pick_indexed_items_anchor_logic(items, indices, set_spec, anchor_key="anchor"):
     items_ = [
         item for item in items if any([k in item for k in indices])
     ]
 
-    if "anchor" in set_spec:
-        if set_spec["anchor"]:
+    if anchor_key in set_spec:
+        if set_spec[anchor_key]:
             items_ = [
-                item for item in items_ if "anchor" in item and item["anchor"]
+                item for item in items_ if anchor_key in item and item[anchor_key]
             ]
         else:
             items_ = [
-                item for item in items_ if "anchor" not in item
+                item for item in items_ if anchor_key not in item
             ]
     return items_
 
@@ -222,6 +249,7 @@ def parse_edges(croot, edge_acc, mapping_fields):
 
 def merge_documents(docs, key_absent_aux="_key", anchor_key="anchor"):
     mains_, mains, auxs, anchors = [], [], [], []
+    # split docs into two groups with and without key_absent_aux
     for item in docs:
         (mains_ if key_absent_aux in item else auxs).append(item)
 
@@ -232,11 +260,45 @@ def merge_documents(docs, key_absent_aux="_key", anchor_key="anchor"):
     r = [dict(ChainMap(*auxs))] + mains
     return r
 
+def smart_merge(agg, collection_name, discriminant_key="role", discriminant_value="authour"):
+    wos_standard = defaultdict(list)
+    without_standard_heap = []
+    seed_list = []
+    # split group into 3:
+    # standard, non_standard and seed_list
+    # merge non_standard onto standard (not replacing fields are already standard item)
+    for item in agg[collection_name]:
+        if discriminant_key in item:
+            if "wos_standard" in item and item[discriminant_key] == discriminant_value:
+                wos_standard[item["wos_standard"]] += [item]
+            else:
+                without_standard_heap += [item]
+        else:
+            seed_list += [item]
+
+    # heuristics
+    for item in without_standard_heap:
+        if "display_name" in item:
+            last_name, first_name = item["display_name"].split(", ")
+        elif "last_name" and "first_name" in item:
+            last_name, first_name = item["last_name"], item["first_name"]
+        else:
+            continue
+        q = last_name + "," + first_name[0]
+        for k in wos_standard:
+            if q in k:
+                wos_standard[k] += [item]
+
+        for k, v in wos_standard.items():
+            seed_list += [dict(ChainMap(*v))]
+        agg[collection_name] = seed_list
+    return agg
 
 def process_document_top(
-    config, doc, index_fields_dict, edge_fields, merge_collections
+    config, doc, vertex_config, edge_fields, merge_collections
 ):
-    acc = apply_mapper(config, doc, index_fields_dict)
+    acc = apply_mapper(config, doc, vertex_config)
+
     for k, v in acc.items():
         v = pick_unique_dict(v)
         if not isinstance(k, tuple):

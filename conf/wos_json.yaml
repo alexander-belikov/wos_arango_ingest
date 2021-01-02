@@ -59,15 +59,6 @@ json:
             source:
                 name: publication
                 anchor: True
-                fields:
-                    - anchor
-            target:
-                name: title
-                anchor: True
-        -   how: all
-            source:
-                name: publication
-                anchor: True
             target:
                 name: language
                 fields:
@@ -145,6 +136,12 @@ json:
             target:
                 name: publication
                 anchor: False
+    merge:
+        -
+            name: contributor
+            discriminator_key: role
+            discriminator_value: author
+
     maps:
         -
             how: dict
@@ -226,19 +223,11 @@ json:
                                             maps:
                                                 -   how: dict
                                                     name: date
-                                                    map:
-                                                        year: year
-                                                        month: month
-                                                        day: day
                                         -   type: item
                                             descend_key: conf_end
                                             maps:
                                                 -   how: dict
                                                     name: date
-                                                    map:
-                                                        year: year
-                                                        month: month
-                                                        day: day
                 -   how: dict
                     name: publication_type
                     map:
@@ -247,26 +236,15 @@ json:
                     name: publication
                     map:
                         vol: volume
-                        issue: issue
-                        accession_no: accession_no
-                        has_abstract: has_abstract
                         fund_text: funding_text
-                -   how: dict
-                    name: title
-                    __extra:
-                        anchor: True
-                    map:
                         item_title: title
+                        xref_doi: doi
                 -   how: dict
                     name: medium
                     __extra:
                         anchor: True
                     map:
                         source_title: title
-                        issn: issn
-                        eissn: eissn
-                        isbn: isbn
-                        eisbn: eisbn
                 -   type: item
                     descend_key: page_info
                     maps:
@@ -275,7 +253,6 @@ json:
                             map:
                                 begin: first_page
                                 end: last_page
-                                range: range
                 -   how: dict
                     name: language
                     map:
@@ -358,10 +335,6 @@ json:
                     name: date
                     __extra:
                         anchor: True
-                    map:
-                        year: year
-                        month: month
-                        day: day
         -
             type: list
             descend_key: references
@@ -379,11 +352,6 @@ json:
                             source:
                                 name: publication
                             target:
-                                name: title
-                        -   how: all
-                            source:
-                                name: publication
-                            target:
                                 name: medium
                         -   how: all
                             source:
@@ -396,17 +364,11 @@ json:
                             name: publication
                             map:
                                 uid: _key
-                                doi: doi
+                                xref_doi: doi
                                 page: first_page
-                                volume: volume
+                                citedTitle: title
                         -   how: dict
                             name: date
-                            map:
-                                year: year
-                        -   how: dict
-                            name: title
-                            map:
-                                citedTitle: title
                         -   how: dict
                             name: medium
                             map:
@@ -449,7 +411,6 @@ json:
                                     name: address
                                     map:
                                         address: full_address
-                                        city: city
                                         addr_no: addr_no
         -
             type: list
@@ -474,13 +435,7 @@ json:
                             how: dict
                             name: address
                             map:
-                                country: country
-                                city: city
-                                state: state
-                                zip: zip
-                                street: street
                                 addr_no: addr_no
-                                full_address: full_address
                         -
                             type: list
                             descend_key: organizations_pref
@@ -505,32 +460,31 @@ json:
                     __extra:
                         anchor: True
                     map:
-                        first_name: first_name
-                        last_name: last_name
                         email_addr: email
-                        wos_standard: wos_standard
                         addr_no: addr_no
                         seq_no : seq_no
-                        role: role
-
+        -   type: list
+            descend_key: contributors
+            maps:
+                -   how: dict
+                    name: contributor
+                    map:
+                        email_addr: email
 
 vertex_collections:
     publication:
         basename: publications
         fields:
             - _key
-            - accession_no
             - title
-            - year
-            - month
-            - day
             - volume
             - issue
+            - accession_no
+            - has_abstract
+            - doi
             - funding_text
-        numeric_fields:
-            - year
-            - month
-            - day
+            - art_no
+            - range
         index:
             - _key
         extra_index:
@@ -539,11 +493,6 @@ vertex_collections:
                 unique: false
                 fields:
                     - title
-            -
-                type: hash
-                unique: false
-                fields:
-                    - year
     medium:
         basename: media
         fields:
@@ -552,6 +501,9 @@ vertex_collections:
             - title
             - eissn
             - eisbn
+            - accession_no
+            - meeting_abs
+            - parent_book_doi
         index:
             - issn
             - isbn
@@ -576,11 +528,32 @@ vertex_collections:
             - email
             - display_name
             - wos_standard
+            - orcid_id
+            - r_id
+            - dais_id
+            - role
         index:
-            - wos_standard
             - first_name
             - last_name
             - email
+            - orcid_id
+            - r_id
+            - dais_id
+            - wos_standard
+        transforms:
+            -
+                foo: lower
+                class: str
+                fields:
+                  - first_name
+                  - last_name
+                  - display_name
+                  - wos_standard
+            -
+                foo: standardize
+                module: wos_db_studies.utils
+                fields:
+                    - wos_standard
     address:
         basename: addresses
         fields:
@@ -588,6 +561,8 @@ vertex_collections:
             - state
             - city
             - zip
+            - street
+            - full_address
         index:
             - country
             - state
@@ -692,12 +667,6 @@ vertex_collections:
                 unique: false
                 fields:
                     - year
-    title:
-        basename: titles
-        fields:
-            - title
-        index:
-            - title
     publisher:
         basename: publishers
         fields:

@@ -13,6 +13,18 @@ pub_col = "publications"
 cite_col = "cites"
 
 
+def standardize(k):
+    # 1. clean period
+    k = k.translate(str.maketrans({'.': ''}))
+    # 2. try to split by ", "
+    k = k.split(", ")
+    if len(k) < 2:
+        k = k[0].split(" ")
+    else:
+        k[1] = k[1].translate(str.maketrans({' ': ''}))
+    return ",".join(k)
+
+
 def delete_collections(sys_db, cnames=[], gnames=[]):
 
     print("collections (non system):")
