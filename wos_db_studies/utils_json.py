@@ -23,17 +23,17 @@ def apply_mapper(mapper, document, vertex_spec):
                             if k in document
                         }
             else:
-                field_map = dict()
                 mapped_part = {}
             # vcol_fields = set(vertex_spec[vcol]["fields"]) - set(field_map.values())
             vcol_fields = vertex_spec[vcol]["fields"]
-            def_part =  {k: document[k]
-                         for k in vcol_fields
-                         if k in document}
+            def_part = {k: document[k]
+                        for k in vcol_fields
+                        if k in document}
             result = {
                         **mapped_part, **def_part,
                         **extra_dict,
                     }
+            result = {k: v for k, v in result.items() if v}
             if "transforms" in vertex_spec[vcol]:
                 for transform in vertex_spec[vcol]["transforms"]:
                     if "module" in transform:
@@ -160,33 +160,36 @@ def add_edges(mapper, agg, vertex_indices):
                 edge_def["source"]["field"],
                 edge_def["target"]["field"],
             )
+
             source_items = pick_indexed_items_anchor_logic(source_items,
                                                            source_index,
                                                            edge_def["source"])
             target_items = pick_indexed_items_anchor_logic(target_items,
                                                            target_index,
                                                            edge_def["target"])
+
             target_items = [item for item in target_items if target_field in item]
-            target_items = dict(
-                zip(
-                    [item[target_field] for item in target_items],
-                    project_dicts(target_items, target_index),
+            if target_items:
+                target_items = dict(
+                    zip(
+                        [item[target_field] for item in target_items],
+                        project_dicts(target_items, target_index),
+                    )
                 )
-            )
-            if "all_value" in edge_def["source"]:
-                all_value = edge_def["source"]["all_value"]
-            else:
-                all_value = None
-            for u in source_items:
-                pointers = u[source_field]
-                up = project_dict(u, source_index)
-                weight = dict()
-                if all_value is not None and all_value in pointers:
-                    agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
+                if "all_value" in edge_def["source"]:
+                    all_value = edge_def["source"]["all_value"]
                 else:
-                    agg[(source, target)] += [
-                        (up, target_items[p], weight) for p in pointers
-                    ]
+                    all_value = None
+                for u in source_items:
+                    pointers = u[source_field]
+                    up = project_dict(u, source_index)
+                    weight = dict()
+                    if all_value is not None and all_value in pointers:
+                        agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
+                    else:
+                        agg[(source, target)] += [
+                            (up, target_items[p], weight) for p in pointers
+                        ]
 
     return agg
 
@@ -287,6 +290,7 @@ def merge_documents(docs, key_absent_aux="_key", anchor_key="anchor"):
     r = [dict(ChainMap(*auxs))] + mains
     return r
 
+
 def smart_merge(agg, collection_name, discriminant_key="role", discriminant_value="authour"):
     wos_standard = defaultdict(list)
     without_standard_heap = []
@@ -306,12 +310,20 @@ def smart_merge(agg, collection_name, discriminant_key="role", discriminant_valu
     # heuristics
     for item in without_standard_heap:
         if "display_name" in item:
-            last_name, first_name = item["display_name"].split(", ")
+            split_display_name = item["display_name"].split(", ")
+            if len(split_display_name) > 1 and len(split_display_name[1]) > 1:
+                last_name, first_name = split_display_name[:2]
+            else:
+                last_name, first_name = split_display_name[0], ""
         elif "last_name" and "first_name" in item:
             last_name, first_name = item["last_name"], item["first_name"]
         else:
             continue
-        q = last_name + "," + first_name[0]
+        if len(first_name) > 0:
+            initial = first_name[0]
+        else:
+            initial = ""
+        q = last_name + "," + initial
         for k in wos_standard:
             if q in k:
                 wos_standard[k] += [item]
@@ -321,9 +333,8 @@ def smart_merge(agg, collection_name, discriminant_key="role", discriminant_valu
         agg[collection_name] = seed_list
     return agg
 
-def process_document_top(
-    config, doc, vertex_config, edge_fields, merge_collections
-):
+
+def process_document_top(doc, config, vertex_config, edge_fields, merge_collections):
     acc = apply_mapper(config, doc, vertex_config)
 
     for k, v in acc.items():
@@ -333,4 +344,4 @@ def process_document_top(
         if k in merge_collections:
             v = merge_documents(v)
         acc[k] = v
-    return acc
+    return [acc]

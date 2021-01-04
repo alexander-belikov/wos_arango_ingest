@@ -140,8 +140,9 @@ def main(
             "type": "indirect",
         }
 
-    # actual_graphs = [g for item in modes2graphs.values() for g in item]
     actual_graphs = []
+    # actual_graphs = [g for item in modes2graphs.values() for g in item]
+
 
     vcollections = []
     # vcollections = list(
