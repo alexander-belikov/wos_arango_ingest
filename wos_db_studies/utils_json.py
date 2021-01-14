@@ -77,6 +77,9 @@ def apply_mapper(mapper, document, vertex_spec):
                     item = apply_mapper(m, cdoc, vertex_spec)
                     for k, v in item.items():
                         agg[k] += [x for x in v if x]
+                    if "edges" in mapper:
+                        # check update
+                        agg = add_edges(mapper, agg, vertex_spec)
             return agg
         elif mapper["type"] == "item":
             for m in mapper["maps"]:
@@ -189,6 +192,11 @@ def add_edges(mapper, agg, vertex_indices):
                     )
                 )
                 for u in source_items:
+                    weight = dict()
+                    if "fields" in edge_def["source"]:
+                        weight.update({k: u[k] for k in edge_def["source"]["fields"] if k in u})
+                    if "values" in edge_def:
+                        weight.update({k: v for k, v in edge_def["values"].items()})
                     up = project_dict(u, source_index)
                     if source_field in u:
                         pointer = u[source_field]

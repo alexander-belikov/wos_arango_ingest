@@ -111,7 +111,7 @@ json:
                 type: list
                 all_value: 0
             target:
-                name: address
+                name: location
                 field: addr_no
                 anchor: True
                 type: value
@@ -212,18 +212,6 @@ json:
                                             name: edition
                                             map:
                                                 "@value": name
-#                        -   type: item
-#                            descend_key: keywords_plus
-#                            maps:
-#                                -
-#                                    type: item
-#                                    descend_key: keyword_plus
-#                                    maps:
-#                                        -
-#                                            how: dict
-#                                            name: keyword
-#                                            map:
-#                                                "#text": name
                         -
                             type: item
                             descend_key: pub_info
@@ -352,7 +340,7 @@ json:
         #                                                type: list
         #                                                all_value: 0
                                                     target:
-                                                        name: address
+                                                        name: location
         #                                                field: addr_no
         #                                                type: value
                                             maps:
@@ -362,7 +350,7 @@ json:
                                                     maps:
                                                         -
                                                             how: dict
-                                                            name: address
+                                                            name: location
                                                             map:
                                                                 "@addr_no": addr_no
                                                 -
@@ -389,6 +377,100 @@ json:
                                                                 -
                                                                     how: dict
                                                                     name: role
+                        -
+                            type: item
+                            descend_key: conferences
+                            maps:
+                                -
+                                    type: list
+                                    descend_key: conference
+                                    edges:
+                                        -   how: all
+                                            source:
+                                                name: conference
+                                            target:
+                                                name: conference_title
+                                        -   how: all
+                                            source:
+                                                name: conference
+                                            target:
+                                                name: conference_info
+                                        -   how: all
+                                            source:
+                                                name: conference
+                                            target:
+                                                name: conference_sponsor
+                                        -   how: all
+                                            source:
+                                                name: conference
+                                            target:
+                                                name: location
+                                        -   how: all
+                                            source:
+                                                name: conference
+                                            target:
+                                                name: date
+                                    maps:
+                                        -   how: dict
+                                            name: conference
+                                            map:
+                                                "@conf_id": id
+                                        -   type: item
+                                            descend_key: conf_titles
+                                            maps:
+                                                -
+                                                    type: list
+                                                    descend_key: conf_title
+                                                    maps:
+                                                        -   how: dict
+                                                            name: conference_title
+                                                            map:
+                                                                "#text": name
+                                        -   type: item
+                                            descend_key: conf_infos
+                                            maps:
+                                                -   type: list
+                                                    descend_key: conf_info
+                                                    maps:
+                                                        -   how: dict
+                                                            name: conference_info
+                                                            map:
+                                                                "#text": name
+                                        -   type: item
+                                            descend_key: conf_dates
+                                            maps:
+                                                -   type: list
+                                                    descend_key: conf_date
+                                                    maps:
+                                                        -   how: dict
+                                                            name: date
+                                                            map:
+                                                                "#text": str_date
+                                        -   type: item
+                                            descend_key: conf_locations
+                                            maps:
+                                                -   type: list
+                                                    descend_key: conf_location
+                                                    maps:
+                                                        -   how: dict
+                                                            name: location
+                                                            map:
+                                                                conf_city: city
+                                                                conf_state: state
+                                                        -   how: dict
+                                                            name: organization
+                                                            map:
+                                                                conf_host: name
+                                        -   type: item
+                                            descend_key: sponsors
+                                            maps:
+                                                -   type: list
+                                                    descend_key: sponsor
+                                                    maps:
+                                                        -   how: dict
+                                                            name: conference_sponsor
+                                                            map:
+                                                                "#text": name
                 -
                     type: item
                     descend_key: fullrecord_metadata
@@ -497,7 +579,7 @@ json:
                                                 -
                                                     how: all
                                                     source:
-                                                        name: address
+                                                        name: location
                                                     target:
                                                         name: organization
                                                 -
@@ -509,7 +591,7 @@ json:
                                             maps:
                                                 -
                                                     how: dict
-                                                    name: address
+                                                    name: location
                                                     __extra:
                                                         anchor: true
                                                     map:
@@ -558,7 +640,7 @@ json:
                                                 type: list
                                                 all_value: 0
                                             target:
-                                                name: address
+                                                name: location
                                                 anchor: reprint
                                                 field: addr_no
                                                 type: value
@@ -570,7 +652,7 @@ json:
                                                 -
                                                     how: all
                                                     source:
-                                                        name: address
+                                                        name: location
                                                     target:
                                                         name: organization
                                                 -
@@ -582,7 +664,7 @@ json:
                                             maps:
                                                 -
                                                     how: dict
-                                                    name: address
+                                                    name: location
                                                     __extra:
                                                         anchor: reprint
                                                     map:
@@ -920,8 +1002,8 @@ vertex_collections:
                 module: wos_db_studies.utils
                 fields:
                     - wos_standard
-    address:
-        basename: addresses
+    location:
+        basename: locations
         fields:
             - country
             - state
@@ -977,12 +1059,6 @@ vertex_collections:
             - name
         index:
             - name
-#    keyword_plus:
-#        basename: keywords_plus
-#        fields:
-#            - name
-#        index:
-#            - name
     edition:
         basename: editions
         fields:
@@ -1075,16 +1151,6 @@ vertex_collections:
             - name
         index:
             - name
-    location:
-        basename: locations
-        fields:
-            - city
-            - state
-            - host
-        index:
-            - city
-            - state
-            - host
     some_id:
         basename: some_ids
         fields:
