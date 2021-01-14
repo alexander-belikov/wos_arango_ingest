@@ -436,9 +436,9 @@ json:
                         -
                             how: all
                             source:
-                                name: address
+                                name: organization
                             target:
-                                name: organization_pref
+                                name: suborganization
                         -   how: all
                             source:
                                 name: address
@@ -450,20 +450,16 @@ json:
                             name: address
                             map:
                                 addr_no: addr_no
-                        -
-                            type: list
-                            descend_key: organizations_pref
-                            maps:
-                                -
-                                    how: value
-                                    name: organization_pref
-                                    key: name
                         -   type: list
                             descend_key: organizations
                             maps:
-                                -   how: value
+                                -   how: dict
                                     name: organization
-                                    key: name
+                        -   type: list
+                            descend_key: suborganizations
+                            maps:
+                                -   how: dict
+                                    name: suborganization
         -
             type: list
             descend_key: authors
@@ -592,10 +588,11 @@ vertex_collections:
         basename: organizations
         fields:
             - name
+            - pref
         index:
             - name
-    organization_pref:
-        basename: organization_pref
+    suborganization:
+        basename: suborganizations
         fields:
             - name
         index:
@@ -643,7 +640,7 @@ vertex_collections:
         index:
             - name
     agency:
-        basename: headings
+        basename: agencies
         fields:
             - name
         index:

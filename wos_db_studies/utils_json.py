@@ -2,38 +2,48 @@ from itertools import product
 from collections import defaultdict, ChainMap
 from .utils import pick_unique_dict
 import importlib
+from wos_parser.chunkflusher import FPSmart
+import gzip
+import json
+from functools import partial
+import multiprocessing as mp
 from pprint import pprint
+
+xml_dummy = "#text"
 
 
 def apply_mapper(mapper, document, vertex_spec):
     if "how" in mapper:
         mode = mapper["how"]
         vcol = mapper["name"]
-        if "__extra" in mapper:
-            extra_dict = mapper["__extra"]
-        else:
-            extra_dict = {}
         # value is a dict
         if mode == "dict":
-            if "map" in mapper:
-                field_map = mapper["map"]
-                mapped_part = {
-                            v: document[k]
-                            for k, v in field_map.items()
-                            if k in document
-                        }
+            if ("filter" not in mapper and "unfilter" not in mapper) or \
+                ("filter" in mapper and all([document[kk] == vv for kk, vv in mapper["filter"].items()])) or \
+                    ("unfilter" in mapper and any([document[kk] != vv for kk, vv in mapper["unfilter"].items()])):
+                kkeys = vertex_spec[vcol]["fields"]
+                if "map" in mapper:
+                    kkeys += [k for k in mapper["map"] if k not in kkeys]
+
+                if not isinstance(document, dict):
+                    pprint(mapper)
+                    pprint(document)
+
+                doc_ = dict()
+                for k, v in document.items():
+                    if isinstance(v, dict):
+                        if xml_dummy in v:
+                            doc_[k] = v[xml_dummy]
+                    else:
+                        doc_[k] = v
+
+                # doc_ = {k: (v[xml_dummy] if isinstance(v, dict) else v) for k, v in document.items() if k in kkeys}
+                if "map" in mapper:
+                    doc_ = {mapper["map"][k] if k in mapper["map"] else k: v for k, v in doc_.items() if v}
+                if "__extra" in mapper:
+                    doc_.update(mapper["__extra"])
             else:
-                mapped_part = {}
-            # vcol_fields = set(vertex_spec[vcol]["fields"]) - set(field_map.values())
-            vcol_fields = vertex_spec[vcol]["fields"]
-            def_part = {k: document[k]
-                        for k in vcol_fields
-                        if k in document}
-            result = {
-                        **mapped_part, **def_part,
-                        **extra_dict,
-                    }
-            result = {k: v for k, v in result.items() if v}
+                doc_ = dict()
             if "transforms" in vertex_spec[vcol]:
                 for transform in vertex_spec[vcol]["transforms"]:
                     if "module" in transform:
@@ -44,9 +54,9 @@ def apply_mapper(mapper, document, vertex_spec):
                         raise KeyError("Either module or class keys should be present")
                     fields = transform["fields"]
                     foo = getattr(module, transform["foo"])
-                    result = {k: (foo(v) if k in fields else v) for k, v in result.items()}
+                    result = {k: (foo(v) if k in fields else v) for k, v in doc_.items()}
             return {
-                vcol: [result]
+                vcol: [doc_]
             }
         elif mode == "value":
             key = mapper["key"]
@@ -66,13 +76,13 @@ def apply_mapper(mapper, document, vertex_spec):
                 for m in mapper["maps"]:
                     item = apply_mapper(m, cdoc, vertex_spec)
                     for k, v in item.items():
-                        agg[k] += v
+                        agg[k] += [x for x in v if x]
             return agg
         elif mapper["type"] == "item":
             for m in mapper["maps"]:
                 item = apply_mapper(m, document, vertex_spec)
                 for k, v in item.items():
-                    agg[k] += v
+                    agg[k] += [x for x in v if x]
             if "edges" in mapper:
                 # check update
                 agg = add_edges(mapper, agg, vertex_spec)
@@ -160,7 +170,6 @@ def add_edges(mapper, agg, vertex_indices):
                 edge_def["source"]["field"],
                 edge_def["target"]["field"],
             )
-
             source_items = pick_indexed_items_anchor_logic(source_items,
                                                            source_index,
                                                            edge_def["source"])
@@ -169,6 +178,9 @@ def add_edges(mapper, agg, vertex_indices):
                                                            edge_def["target"])
 
             target_items = [item for item in target_items if target_field in item]
+            # pprint(edge_def)
+            # print(source_items)
+            # print(target_items)
             if target_items:
                 target_items = dict(
                     zip(
@@ -176,25 +188,31 @@ def add_edges(mapper, agg, vertex_indices):
                         project_dicts(target_items, target_index),
                     )
                 )
-                if "all_value" in edge_def["source"]:
-                    all_value = edge_def["source"]["all_value"]
-                else:
-                    all_value = None
                 for u in source_items:
-                    pointers = u[source_field]
                     up = project_dict(u, source_index)
-                    weight = dict()
-                    if all_value is not None and all_value in pointers:
-                        agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
+                    if source_field in u:
+                        pointer = u[source_field]
+                        # if pointer == '0':
+                        #     print(source_items)
+                        if pointer in target_items.keys():
+                            agg[(source, target)] += [(up, target_items[pointer], weight)]
+                        else:
+                            agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
                     else:
-                        agg[(source, target)] += [
-                            (up, target_items[p], weight) for p in pointers
-                        ]
-
+                        agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
     return agg
 
 
-def pick_indexed_items_anchor_logic(items, indices, set_spec, anchor_key="anchor"):
+def pick_indexed_items_anchor_logic(items, indices, set_spec,
+                                    anchor_key="anchor"):
+    """
+
+    :param items: list of documents (dict)
+    :param indices:
+    :param set_spec:
+    :param anchor_key:
+    :return:
+    """
     items_ = [
         item for item in items if any([k in item for k in indices])
     ]
@@ -202,7 +220,7 @@ def pick_indexed_items_anchor_logic(items, indices, set_spec, anchor_key="anchor
     if anchor_key in set_spec:
         if set_spec[anchor_key]:
             items_ = [
-                item for item in items_ if anchor_key in item and item[anchor_key]
+                item for item in items_ if anchor_key in item and item[anchor_key] == set_spec[anchor_key]
             ]
         else:
             items_ = [
@@ -291,7 +309,16 @@ def merge_documents(docs, key_absent_aux="_key", anchor_key="anchor"):
     return r
 
 
-def smart_merge(agg, collection_name, discriminant_key="role", discriminant_value="authour"):
+def smart_merge(agg, collection_name, discriminant_key="role", discriminant_value="author"):
+    """
+    contributor specific merge function
+
+    :param agg:
+    :param collection_name:
+    :param discriminant_key:
+    :param discriminant_value:
+    :return:
+    """
     wos_standard = defaultdict(list)
     without_standard_heap = []
     seed_list = []
@@ -344,4 +371,29 @@ def process_document_top(doc, config, vertex_config, edge_fields, merge_collecti
         if k in merge_collections:
             v = merge_documents(v)
         acc[k] = v
-    return [acc]
+    return acc
+
+
+def get_json_data(source, pattern=None):
+    if source[-2:] == "gz":
+        open_foo = gzip.GzipFile
+    else:
+        open_foo = open
+
+    with open_foo(source, 'rb') as fp:
+        if pattern:
+            fps = FPSmart(fp, pattern)
+        else:
+            fps = fp
+        data = json.load(fps)
+    return data
+
+
+def foo_parallel(data, kwargs, n=None):
+    func = partial(process_document_top, **kwargs)
+    n_proc = 4
+    if n is not None:
+        data = data[:n]
+    with mp.Pool(n_proc) as p:
+        r = p.map(func, data)
+    return r

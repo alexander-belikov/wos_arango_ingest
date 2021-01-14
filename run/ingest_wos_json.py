@@ -4,8 +4,6 @@ import yaml
 from os.path import join, expanduser
 from os import listdir
 from os.path import isfile, join
-import csv
-from itertools import permutations
 from arango import ArangoClient
 from wos_db_studies.utils import (
     delete_collections,
@@ -21,6 +19,7 @@ from wos_parser.chunkflusher import FPSmart
 import pathos.multiprocessing as mp
 from functools import partial
 from wos_db_studies.utils_json import apply_mapper
+
 
 def is_int(x):
     try:
