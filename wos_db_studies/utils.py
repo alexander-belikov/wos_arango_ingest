@@ -3,7 +3,7 @@ import gzip
 from os.path import join, expanduser
 import time
 import json
-
+from datetime import datetime
 seconds = time.time()
 
 gr_name = "wos_csv"
@@ -24,6 +24,35 @@ def standardize(k):
         k[1] = k[1].translate(str.maketrans({' ': ''}))
     return ",".join(k)
 
+
+def parse_date_standard(input_str):
+    dt = datetime.strptime(input_str, "%Y-%m-%d")
+    year, month, day = dt.year, dt.month, dt.day
+    return year, month, day
+
+
+def parse_date_conf(input_str):
+    dt = datetime.strptime(input_str, "%Y%m%d")
+    year, month, day = dt.year, dt.month, dt.day
+    return year, month, day
+
+
+def parse_conf_date_text(input_str):
+    # date_b = 'NOV 03-04, 2008'.split(", ")
+    dt = datetime.strptime(input_str, "%Y-%m-%d")
+
+    year = datetime.strptime(dt[-1], "%Y").year
+    date_b_ = datetime.strptime(dt[0].split("-")[0], "%b %d")
+    month, day = date_b_.month, date_b_.day
+    return year, month, day
+
+
+def try_int(x):
+    try:
+        x = int(x)
+        return x
+    except:
+        return x
 
 def delete_collections(sys_db, cnames=[], gnames=[]):
 

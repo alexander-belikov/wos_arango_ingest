@@ -14,16 +14,6 @@ json:
                         anchor: True
                     field: _key
     edges:
-#        -
-#            how: all
-#            source:
-#                name: publication
-#                anchor: True
-#                fields:
-#                    - anchor
-#            target:
-#                name: date
-#                anchor: True
         -
             how: all
             source:
@@ -231,8 +221,15 @@ json:
                                     name: date
                                     __extra:
                                         anchor: True
-                                    map:
-                                        "@sortdate": str_date
+                                    transforms:
+                                        -   foo: parse_date_standard
+                                            module: wos_db_studies.utils
+                                            input:
+                                                - "@sortdate"
+                                            output:
+                                                - year
+                                                - month
+                                                - day
                                 -
                                     how: dict
                                     name: publication_type
@@ -444,8 +441,15 @@ json:
                                                     maps:
                                                         -   how: dict
                                                             name: date
-                                                            map:
-                                                                "#text": str_date
+                                                            transforms:
+                                                                -   foo: parse_date_conf
+                                                                    module: wos_db_studies.utils
+                                                                    input:
+                                                                        - "@conf_start"
+                                                                    output:
+                                                                        - year
+                                                                        - month
+                                                                        - day
                                         -   type: item
                                             descend_key: conf_locations
                                             maps:
@@ -905,6 +909,13 @@ json:
                                                 "@type": issn
                                             map:
                                                 "@value": issn
+                                        -
+                                            how: dict
+                                            name: publication
+                                            filter:
+                                                "@type": xref_doi
+                                            map:
+                                                "@value": doi
 
 vertex_collections:
     publication:
@@ -1104,17 +1115,18 @@ vertex_collections:
     date:
         basename: dates
         fields:
-            - str_date
+            - year
+            - month
+            - day
         index:
-            - str_date
-#        fields:
-#            - year
-#            - month
-#            - day
-#        index:
-#            - year
-#            - month
-#            - day
+            - year
+            - month
+            - day
+        transforms:
+            -   foo: try_int
+                module: wos_db_studies.utils
+                fields:
+                    - year
 #        extra_index:
 #            -   type: hash
 #                unique: false

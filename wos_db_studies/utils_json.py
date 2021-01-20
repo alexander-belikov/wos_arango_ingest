@@ -22,21 +22,29 @@ def apply_mapper(mapper, document, vertex_spec):
                 ("filter" in mapper and all([document[kk] == vv for kk, vv in mapper["filter"].items()])) or \
                     ("unfilter" in mapper and any([document[kk] != vv for kk, vv in mapper["unfilter"].items()])):
                 kkeys = vertex_spec[vcol]["fields"]
+
+                doc_ = dict()
+                if "transforms" in mapper:
+                    for t in mapper["transforms"]:
+                        doc_.update(transform_foo(t, document))
+
                 if "map" in mapper:
                     kkeys += [k for k in mapper["map"] if k not in kkeys]
 
-                if not isinstance(document, dict):
-                    pprint(mapper)
-                    pprint(document)
-
-                doc_ = dict()
-                for k, v in document.items():
-                    if isinstance(v, dict):
-                        if xml_dummy in v:
-                            doc_[k] = v[xml_dummy]
-                    else:
-                        doc_[k] = v
-
+                if isinstance(document, dict):
+                    for kk, vv in document.items():
+                        if kk in kkeys:
+                            if isinstance(vv, dict):
+                                if xml_dummy in vv:
+                                    doc_[kk] = vv[xml_dummy]
+                            else:
+                                doc_[kk] = vv
+                else:
+                    if not isinstance(document, dict):
+                        pprint(mapper)
+                        pprint(document)
+                # for upd in upd_trans:
+                #     doc_.update(upd)
                 # doc_ = {k: (v[xml_dummy] if isinstance(v, dict) else v) for k, v in document.items() if k in kkeys}
                 if "map" in mapper:
                     doc_ = {mapper["map"][k] if k in mapper["map"] else k: v for k, v in doc_.items() if v}
@@ -45,16 +53,9 @@ def apply_mapper(mapper, document, vertex_spec):
             else:
                 doc_ = dict()
             if "transforms" in vertex_spec[vcol]:
-                for transform in vertex_spec[vcol]["transforms"]:
-                    if "module" in transform:
-                        module = importlib.import_module(transform["module"])
-                    elif "class" in transform:
-                        module = eval('str')
-                    else:
-                        raise KeyError("Either module or class keys should be present")
-                    fields = transform["fields"]
-                    foo = getattr(module, transform["foo"])
-                    result = {k: (foo(v) if k in fields else v) for k, v in doc_.items()}
+                for t in vertex_spec[vcol]["transforms"]:
+                    upd = transform_foo(t, doc_)
+                    doc_.update(upd)
             return {
                 vcol: [doc_]
             }
@@ -105,6 +106,25 @@ def apply_mapper(mapper, document, vertex_spec):
             )
     else:
         raise KeyError("Mapper type has does not have either how or type keys")
+
+
+def transform_foo(transform, doc):
+    if "module" in transform:
+        module = importlib.import_module(transform["module"])
+    elif "class" in transform:
+        module = eval(transform["class"])
+    else:
+        raise KeyError("Either module or class keys should be present")
+    try:
+        foo = getattr(module, transform["foo"])
+        if "input" in transform and "output" in transform:
+            args = [doc[k] for k in transform["input"]]
+            upd = {k: v for k, v in zip(transform["output"], foo(*args))}
+        elif "fields" in transform:
+            upd = {k: foo(v) for k, v in doc.items() if k in transform["fields"]}
+    except:
+        upd = {}
+    return upd
 
 
 def add_weights(mapper, agg):
