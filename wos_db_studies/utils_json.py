@@ -159,10 +159,6 @@ def add_edges(mapper, agg, vertex_indices):
         # get source and target edge fields
         source_index, target_index = vertex_indices[source]["index"], vertex_indices[target]["index"]
 
-        # if "fields" in edge_def["source"]:
-        #     source_index += edge_def["source"]["fields"]
-        # if "fields" in edge_def["target"]:
-        #     target_index += edge_def["target"]["fields"]
         # get source and target items
         source_items, target_items = agg[source], agg[target]
 
@@ -176,9 +172,23 @@ def add_edges(mapper, agg, vertex_indices):
             for u, v in product(source_items, target_items):
                 weight = dict()
                 if "fields" in edge_def["source"]:
-                    weight.update({k: u[k] for k in edge_def["source"]["fields"] if k in u})
+                    for k in edge_def["source"]["fields"]:
+                        if k in u:
+                            weight[k] = u[k]
                 if "fields" in edge_def["target"]:
-                    weight.update({k: v[k] for k in edge_def["target"]["fields"] if k in v})
+                    for k in edge_def["target"]["fields"]:
+                        if k in v:
+                            weight[k] = v[k]
+                if "weight_exclusive" in edge_def["source"]:
+                    for k in edge_def["source"]["weight_exclusive"]:
+                        if k in u:
+                            weight[k] = u[k]
+                            del u[k]
+                if "weight_exclusive" in edge_def["target"]:
+                    for k in edge_def["target"]["weight_exclusive"]:
+                        if k in v:
+                            weight[k] = v[k]
+                            del v[k]
                 if "values" in edge_def:
                     weight.update({k: v for k, v in edge_def["values"].items()})
                 agg[(source, target)] += [
@@ -201,9 +211,7 @@ def add_edges(mapper, agg, vertex_indices):
                                                            edge_def["target"])
 
             target_items = [item for item in target_items if target_field in item]
-            # pprint(edge_def)
-            # print(source_items)
-            # print(target_items)
+
             if target_items:
                 target_items = dict(
                     zip(
@@ -220,8 +228,6 @@ def add_edges(mapper, agg, vertex_indices):
                     up = project_dict(u, source_index)
                     if source_field in u:
                         pointer = u[source_field]
-                        # if pointer == '0':
-                        #     print(source_items)
                         if pointer in target_items.keys():
                             agg[(source, target)] += [(up, target_items[pointer], weight)]
                         else:
@@ -241,19 +247,17 @@ def pick_indexed_items_anchor_logic(items, indices, set_spec,
     :param anchor_key:
     :return:
     """
+
+    # pick item that have any index field present
+
     items_ = [
         item for item in items if any([k in item for k in indices])
     ]
 
     if anchor_key in set_spec:
-        if set_spec[anchor_key]:
-            items_ = [
-                item for item in items_ if anchor_key in item and item[anchor_key] == set_spec[anchor_key]
-            ]
-        else:
-            items_ = [
-                item for item in items_ if anchor_key not in item
-            ]
+        items_ = [
+            item for item in items_ if anchor_key in item and item[anchor_key] == set_spec[anchor_key]
+        ]
     return items_
 
 
@@ -323,11 +327,18 @@ def parse_edges(croot, edge_acc, mapping_fields):
             return [], defaultdict(list)
 
 
-def merge_documents(docs, key_absent_aux="_key", anchor_key="anchor"):
+def merge_documents(docs, main_key="_key", anchor_key="anchor"):
+    """
+    split docs into
+    :param docs:
+    :param main_key:
+    :param anchor_key:
+    :return:
+    """
     mains_, mains, auxs, anchors = [], [], [], []
-    # split docs into two groups with and without key_absent_aux
+    # split docs into two groups with and without main_key
     for item in docs:
-        (mains_ if key_absent_aux in item else auxs).append(item)
+        (mains_ if main_key in item else auxs).append(item)
 
     for item in mains_:
         (anchors if anchor_key in item and item[anchor_key] else mains).append(item)

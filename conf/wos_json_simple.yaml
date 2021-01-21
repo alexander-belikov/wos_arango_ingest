@@ -1,1186 +1,1122 @@
 json:
-    type: item
-    descend_key: REC
-    weights:
-        -
-            source:
-                name: contributor
-            target:
-                name: role
-            vertex:
-                -
-                    name: publication
-                    condition:
-                        anchor: True
-                    field: _key
-    edges:
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: publication_type
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: document_type
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: language
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: bib_id
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: heading
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: subheading
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: subject
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: some_id
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: medium
-        -
-            how: all
-            source:
-                name: medium
-            target:
-                name: medium_title
-                anchor: True
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: publication
-                anchor: False
-        -
-            how: 1-n
-            source:
-                name: contributor
-                field: addr_no
-                anchor: True
-                type: list
-                all_value: 0
-            target:
-                name: location
-                field: addr_no
-                anchor: True
-                type: value
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: agency
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: grant_id
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: funding_text
-        -
-            how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: keyword
-        -   how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: abstract
-        -   how: all
-            source:
-                name: publication
-                anchor: True
-            target:
-                name: edition
-    maps:
-        -
-            how: dict
-            name: publication
-            __extra:
-                anchor: true
-            map:
-                UID: _key
-        -
-            type: item
-            descend_key: static_data
-            edges:
-                -
-                    how: all
-                    source:
-                        name: publication
-                        anchor: True
-                        fields:
-                            - anchor
-                    target:
+  type: item
+  descend_key: REC
+  weights:
+    - source:
+        name: location
+      target:
+        name: organization
+      vertex:
+        - name: publication
+          condition:
+            anchor: true
+          field: _key
+    - source:
+        name: contributor
+      target:
+        name: location
+      vertex:
+        - name: publication
+          condition:
+            anchor: true
+          field: _key
+    - source:
+        name: publisher
+      target:
+        name: location
+      vertex:
+        - name: publication
+          condition:
+            anchor: true
+          field: _key
+  edges:
+    - how: all
+      source:
+        name: contributor
+        anchor: true
+        weight_exclusive:
+          - seq_no
+          - role
+      target:
+        name: publication
+        anchor: true
+        fields:
+          - anchor
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: conference
+    - how: all
+      source:
+        name: publication
+        anchor: true
+        fields:
+          - anchor
+      target:
+        name: date
+        anchor: true
+    - how: all
+      source:
+        name: publication
+        anchor: true
+        fields:
+          - anchor
+      target:
+        name: medium_title
+        anchor: true
+    - how: all
+      source:
+        name: publisher
+        anchor: true
+        weight_exclusive:
+          - seq_no
+      target:
+        name: publication
+        anchor: true
+        fields:
+          - anchor
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: publication_type
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: document_type
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: language
+        weight_exclusive:
+          - type
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: bib_id
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: heading
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: subheading
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: subject
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: some_id
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: medium
+    - how: all
+      source:
+        name: medium
+      target:
+        name: medium_title
+        anchor: true
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: publication
+        anchor: false
+    - how: 1-n
+      source:
+        name: contributor
+        field: addr_no
+        anchor: true
+        type: list
+        all_value: 0
+      target:
+        name: location
+        field: addr_no
+        anchor: true
+        type: value
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: agency
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: grant_id
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: funding_text
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: keyword
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: abstract
+    - how: all
+      source:
+        name: publication
+        anchor: true
+      target:
+        name: edition
+  maps:
+    - how: dict
+      name: publication
+      __extra:
+        anchor: true
+      map:
+        UID: _key
+    - type: item
+      descend_key: static_data
+      maps:
+        - type: item
+          descend_key: summary
+          maps:
+            - type: item
+              descend_key: EWUID
+              maps:
+                - type: list
+                  descend_key: edition
+                  maps:
+                    - how: dict
+                      name: edition
+                      map:
+                        '@value': name
+            - type: item
+              descend_key: pub_info
+              maps:
+                - how: dict
+                  name: publication
+                  __extra:
+                    anchor: true
+                  map:
+                    '@has_abstract': has_abstract
+                    '@vol': volume
+                    '@issue': issue
+                    '@supplement': supplement
+                - how: dict
+                  name: date
+                  __extra:
+                    anchor: true
+                  transforms:
+                    - foo: parse_date_standard
+                      module: wos_db_studies.utils
+                      input:
+                        - '@sortdate'
+                      output:
+                        - year
+                        - month
+                        - day
+                - how: dict
+                  name: publication_type
+                  map:
+                    '@pubtype': type
+                - type: item
+                  descend_key: page
+                  maps:
+                    - how: dict
+                      name: publication
+                      __extra:
+                        anchor: true
+                      map:
+                        '@begin': first_page
+                        '@end': last_page
+                        '@page_count': page_count
+                        '#text': str_pages
+            - type: item
+              descend_key: titles
+              maps:
+                - type: list
+                  descend_key: title
+                  maps:
+                    - how: dict
+                      name: publication
+                      filter:
+                        '@type': item
+                      map:
+                        '#text': title
+                    - how: dict
+                      name: medium_title
+                      __extra:
+                        anchor: true
+                      unfilter:
+                        '@type': item
+                      map:
+                        '#text': title
+            - type: item
+              descend_key: names
+              maps:
+                - type: list
+                  descend_key: name
+                  maps:
+                    - type: item
+                      maps:
+                        - how: dict
+                          name: contributor
+                          __extra:
+                            anchor: true
+                          map:
+                            '@seq_no': seq_no
+                            '@addr_no': addr_no
+                            '@dais_id': dais_id
+                            '@role': role
+                            email_addr: email
+            - type: item
+              descend_key: doctypes
+              maps:
+                - type: list
+                  descend_key: doctype
+                  maps:
+                    - how: dict
+                      name: document_type
+                      map:
+                        '#text': name
+            - type: item
+              descend_key: publishers
+              maps:
+                - type: list
+                  descend_key: publisher
+                  maps:
+                    - type: item
+                      edges:
+                        - how: all
+                          source:
+                            name: publisher
+                            weight_exclusive:
+                              - seq_no
+                              - role
+                          target:
+                            name: location
+                      maps:
+                        - type: item
+                          descend_key: address_spec
+                          maps:
+                            - how: dict
+                              name: location
+                        - type: item
+                          descend_key: names
+                          maps:
+                            - type: list
+                              descend_key: name
+                              maps:
+                                - how: dict
+                                  name: publisher
+                                  __extra:
+                                    anchor: true
+                                  map:
+                                    '@seq_no': seq_no
+                                    '@role': role
+            - type: item
+              descend_key: conferences
+              maps:
+                - type: list
+                  descend_key: conference
+                  edges:
+                    - how: all
+                      source:
+                        name: conference
+                      target:
+                        name: conference_title
+                    - how: all
+                      source:
+                        name: conference
+                      target:
+                        name: conference_info
+                    - how: all
+                      source:
+                        name: conference
+                      target:
+                        name: conference_sponsor
+                    - how: all
+                      source:
+                        name: conference
+                      target:
+                        name: location
+                    - how: all
+                      source:
+                        name: conference
+                      target:
                         name: date
-                        anchor: True
-                -
-                    how: all
-                    source:
-                        name: publication
-                        anchor: True
-                        fields:
-                            - anchor
-                    target:
-                        name: medium_title
-                        anchor: True
-#                -
-#                    how: all
-#                    source:
-#                        name: publication
-#                        anchor: True
-#                    target:
-#                        name: publisher
-            maps:
-                -
-                    type: item
-                    descend_key: summary
-                    maps:
-                        -
-                            type: item
-                            descend_key: EWUID
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: edition
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: edition
-                                            map:
-                                                "@value": name
-                        -
-                            type: item
-                            descend_key: pub_info
-                            maps:
-                                -
-                                    how: dict
-                                    name: publication
-                                    __extra:
-                                        anchor: True
-                                    map:
-                                        "@has_abstract": has_abstract
-                                        "@vol": volume
-                                        "@issue": issue
-                                        "@supplement": supplement
-                                -
-                                    how: dict
-                                    name: date
-                                    __extra:
-                                        anchor: True
-                                    transforms:
-                                        -   foo: parse_date_standard
-                                            module: wos_db_studies.utils
-                                            input:
-                                                - "@sortdate"
-                                            output:
-                                                - year
-                                                - month
-                                                - day
-                                -
-                                    how: dict
-                                    name: publication_type
-                                    map:
-                                        "@pubtype": name
-                                -
-                                    type: item
-                                    descend_key: page
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: publication
-                                            __extra:
-                                                anchor: True
-                                            map:
-                                                "@begin": first_page
-                                                "@end": last_page
-                                                "@page_count": page_count
-                                                "#text": str_pages
-                        -
-                            type: item
-                            descend_key: titles
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: title
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: publication
-                                            filter:
-                                                "@type": item
-                                            map:
-                                                "#text": title
-
-                                        -
-                                            how: dict
-                                            name: medium_title
-                                            __extra:
-                                                anchor: True
-                                            unfilter:
-                                                "@type": item
-                                            map:
-                                                "#text": title
-                        -
-                            type: item
-                            descend_key: names
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: name
-                                    maps:
-                                        -
-                                            type: item
-                                            edges:
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: contributor
-                                                    target:
-                                                        name: role
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: contributor
-                                                    __extra:
-                                                        anchor: True
-                                                    map:
-                                                        "@seq_no": seq_no
-                                                        "@addr_no": addr_no
-                                                        "@dais_id": dais_id
-                                                        email_addr: email
-                                                -
-                                                    how: dict
-                                                    name: role
-                        -
-                            type: item
-                            descend_key: doctypes
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: doctype
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: document_type
-                                            map:
-                                                "#text": name
-                        -
-                            type: item
-                            descend_key: publishers
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: publisher
-                                    maps:
-                                        -
-                                            type: item
-                                            edges:
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: publisher
-        #                                                field: addr_no
-        #                                                type: list
-        #                                                all_value: 0
-                                                    target:
-                                                        name: location
-        #                                                field: addr_no
-        #                                                type: value
-                                            maps:
-                                                -
-                                                    type: item
-                                                    descend_key: address_spec
-                                                    maps:
-                                                        -
-                                                            how: dict
-                                                            name: location
-                                                            map:
-                                                                "@addr_no": addr_no
-                                                -
-                                                    type: item
-                                                    descend_key: names
-                                                    edges:
-                                                        -
-                                                            how: all
-                                                            source:
-                                                                name: publisher
-                                                            target:
-                                                                name: role
-                                                    maps:
-                                                        -
-                                                            type: list
-                                                            descend_key: name
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: publisher
-                                                                    map:
-                                                                        "@addr_no": addr_no
-                                                                        "@seq_no": seq_no
-                                                                -
-                                                                    how: dict
-                                                                    name: role
-                        -
-                            type: item
-                            descend_key: conferences
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: conference
-                                    edges:
-                                        -   how: all
-                                            source:
-                                                name: conference
-                                            target:
-                                                name: conference_title
-                                        -   how: all
-                                            source:
-                                                name: conference
-                                            target:
-                                                name: conference_info
-                                        -   how: all
-                                            source:
-                                                name: conference
-                                            target:
-                                                name: conference_sponsor
-                                        -   how: all
-                                            source:
-                                                name: conference
-                                            target:
-                                                name: location
-                                        -   how: all
-                                            source:
-                                                name: conference
-                                            target:
-                                                name: date
-                                    maps:
-                                        -   how: dict
-                                            name: conference
-                                            map:
-                                                "@conf_id": id
-                                        -   type: item
-                                            descend_key: conf_titles
-                                            maps:
-                                                -
-                                                    type: list
-                                                    descend_key: conf_title
-                                                    maps:
-                                                        -   how: dict
-                                                            name: conference_title
-                                                            map:
-                                                                "#text": name
-                                        -   type: item
-                                            descend_key: conf_infos
-                                            maps:
-                                                -   type: list
-                                                    descend_key: conf_info
-                                                    maps:
-                                                        -   how: dict
-                                                            name: conference_info
-                                                            map:
-                                                                "#text": name
-                                        -   type: item
-                                            descend_key: conf_dates
-                                            maps:
-                                                -   type: list
-                                                    descend_key: conf_date
-                                                    maps:
-                                                        -   how: dict
-                                                            name: date
-                                                            transforms:
-                                                                -   foo: parse_date_conf
-                                                                    module: wos_db_studies.utils
-                                                                    input:
-                                                                        - "@conf_start"
-                                                                    output:
-                                                                        - year
-                                                                        - month
-                                                                        - day
-                                        -   type: item
-                                            descend_key: conf_locations
-                                            maps:
-                                                -   type: list
-                                                    descend_key: conf_location
-                                                    maps:
-                                                        -   how: dict
-                                                            name: location
-                                                            map:
-                                                                conf_city: city
-                                                                conf_state: state
-                                                        -   how: dict
-                                                            name: organization
-                                                            map:
-                                                                conf_host: name
-                                        -   type: item
-                                            descend_key: sponsors
-                                            maps:
-                                                -   type: list
-                                                    descend_key: sponsor
-                                                    maps:
-                                                        -   how: dict
-                                                            name: conference_sponsor
-                                                            map:
-                                                                "#text": name
-                -
-                    type: item
-                    descend_key: fullrecord_metadata
-                    maps:
-                        -
-                            type: item
-                            descend_key: languages
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: language
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: language
-                                            map:
-                                                "#text": value
-                                                "@type": type
-                        -
-                            type: item
-                            descend_key: normalized_languages
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: language
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: language
-                                            map:
-                                                "#text": value
-                                                "@type": type
-                        -
-                            type: item
-                            descend_key: normalized_doctypes
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: doctype
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: document_type
-                                            map:
-                                                "#text": name
-                        -
-                            type: item
-                            descend_key: references
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: reference
-                                    maps:
-                                        -
-                                            type: item
-                                            edges:
-                                                -   how: all
-                                                    source:
-                                                        name: publication
-                                                    target:
-                                                        name: date
-                                                -   how: all
-                                                    source:
-                                                        name: contributor
-                                                    target:
-                                                        name: publication
-                                                    values:
-                                                        reference: True
-                                                -   how: all
-                                                    source:
-                                                        name: publication
-                                                    target:
-                                                        name: medium_title
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: publication
-                                                    map:
-                                                        uid: _key
-                                                        xref_doi: doi
-                                                        page: first_page
-                                                        citedTitle: title
-                                                -   how: dict
-                                                    name: date
-                                                -   how: dict
-                                                    name: medium_title
-                                                    map:
-                                                        citedWork: title
-                                                -   how: dict
-                                                    descend_key: reference
-                                                    name: contributor
-                                                    map:
-                                                        citedAuthor: wos_standard
-                        -
-                            type: item
-                            descend_key: addresses
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: address_name
-                                    maps:
-                                        -
-                                            type: item
-                                            descend_key: address_spec
-                                            edges:
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: location
-                                                    target:
-                                                        name: organization
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: organization
-                                                    target:
-                                                        name: suborganization
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: location
-                                                    __extra:
-                                                        anchor: true
-                                                    map:
-                                                        "@addr_no": addr_no
-                                                -
-                                                    type: item
-                                                    descend_key: organizations
-                                                    maps:
-                                                        -
-                                                            type: list
-                                                            descend_key: organization
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: organization
-                                                                    map:
-                                                                        "#text": name
-                                                                        "@pref": pref
-                                                -
-                                                    type: item
-                                                    descend_key: suborganizations
-                                                    maps:
-                                                        -
-                                                            type: list
-                                                            descend_key: suborganization
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: suborganization
-                                                                    map:
-                                                                        "#text": name
-                        -
-                            type: item
-                            descend_key: reprint_addresses
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: address_name
-                                    edges:
-                                        -
-                                            how: 1-n
-                                            source:
-                                                name: contributor
-                                                field: addr_no
-                                                anchor: reprint
-                                                type: list
-                                                all_value: 0
-                                            target:
-                                                name: location
-                                                anchor: reprint
-                                                field: addr_no
-                                                type: value
-                                    maps:
-                                        -
-                                            type: item
-                                            descend_key: address_spec
-                                            edges:
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: location
-                                                    target:
-                                                        name: organization
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: organization
-                                                    target:
-                                                        name: suborganization
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: location
-                                                    __extra:
-                                                        anchor: reprint
-                                                    map:
-                                                        "@addr_no": addr_no
-                                                -
-                                                    type: item
-                                                    descend_key: organizations
-                                                    maps:
-                                                        -
-                                                            type: list
-                                                            descend_key: organization
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: organization
-                                                                    map:
-                                                                        "#text": name
-                                                                        "@pref": pref
-                                                -
-                                                    type: item
-                                                    descend_key: suborganizations
-                                                    maps:
-                                                        -
-                                                            type: list
-                                                            descend_key: suborganization
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: suborganization
-                                                                    map:
-                                                                        "#text": name
-                                        -
-                                            type: item
-                                            descend_key: names
-                                            maps:
-                                                -
-                                                    type: list
-                                                    descend_key: name
-                                                    maps:
-                                                        -
-                                                            type: item
-                                                            edges:
-                                                                -
-                                                                    how: all
-                                                                    source:
-                                                                        name: contributor
-                                                                    target:
-                                                                        name: role
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: contributor
-                                                                    __extra:
-                                                                        anchor: reprint
-                                                                    map:
-                                                                        "@seq_no": seq_no
-                                                                        "@addr_no": addr_no
-                                                                        "@dais_id": dais_id
-                                                                        email_addr: email
-                                                                -
-                                                                    how: dict
-                                                                    name: role
-
-                        -
-                            type: item
-                            descend_key: category_info
-                            maps:
-                                -
-                                    type: item
-                                    descend_key: headings
-                                    maps:
-                                        -
-                                            type: list
-                                            descend_key: heading
-                                            maps:
-                                                -   how: dict
-                                                    name: heading
-                                                    map:
-                                                        "#text" : name
-                                -
-                                    type: item
-                                    descend_key: subheadings
-                                    maps:
-                                        -
-                                            type: list
-                                            descend_key: subheading
-                                            maps:
-                                                -   how: dict
-                                                    name: subheading
-                                                    map:
-                                                        "#text" : name
-                                -
-                                    type: item
-                                    descend_key: subjects
-                                    maps:
-                                        -
-                                            type: list
-                                            descend_key: subject
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: subject
-                                                    map:
-                                                        "#text": name
-                        -
-                            type: item
-                            descend_key: fund_ack
-                            maps:
-                                -
-                                    type: item
-                                    descend_key: fund_text
-                                    maps:
-                                        -
-                                            type: list
-                                            descend_key: p
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: funding_text
-                                                    map:
-                                                        "#text" : text
-                                -
-                                    type: item
-                                    descend_key: grants
-                                    maps:
-                                        -
-                                            type: list
-                                            descend_key: grant
-                                            edges:
-                                                -
-                                                    how: all
-                                                    source:
-                                                        name: agency
-                                                    target:
-                                                        name: grant_id
-                                            maps:
-                                                -
-                                                    how: dict
-                                                    name: agency
-                                                    map:
-                                                        grant_agency : name
-                                                -
-                                                    type: item
-                                                    descend_key: grant_ids
-                                                    maps:
-                                                        -
-                                                            type: list
-                                                            descend_key: grant_id
-                                                            maps:
-                                                                -
-                                                                    how: dict
-                                                                    name: grant_id
-                                                                    map:
-                                                                        "#text": name
-                        -
-                            type: item
-                            descend_key: keywords
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: keyword
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: keyword
-                                            map:
-                                                "#text" : text
-                        -
-                            type: item
-                            descend_key: abstracts
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: abstract
-                                    maps:
-                                        -
-                                            type: item
-                                            descend_key: abstract_text
-                                            maps:
-                                                -
-                                                    type: list
-                                                    descend_key: p
-                                                    maps:
-                                                        -   how: dict
-                                                            name: abstract
-                                                            map:
-                                                                "#text": name
-                -
-                    type: item
-                    descend_key: item
-                    maps:
-                        -
-                            type: item
-                            descend_key: ids
-                            maps:
-                                -
-                                    how: dict
-                                    name: some_id
-                                    map:
-                                        "#text": id
-                        -
-                            how: dict
-                            name: bib_id
-                            map:
-                                bib_id: id
-                        -   type: item
-                            descend_key: keywords_plus
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: keyword_plus
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: keyword
-                                            map:
-                                                "#text": name
-        -
-            type: item
-            descend_key: dynamic_data
-            maps:
-                -
-                    type: item
-                    descend_key: cluster_related
-                    maps:
-                        -
-                            type: item
-                            descend_key: identifiers
-                            maps:
-                                -
-                                    type: list
-                                    descend_key: identifier
-                                    maps:
-                                        -
-                                            how: dict
-                                            name: medium
-                                            filter:
-                                                "@type": issn
-                                            map:
-                                                "@value": issn
-                                        -
-                                            how: dict
-                                            name: publication
-                                            filter:
-                                                "@type": xref_doi
-                                            map:
-                                                "@value": doi
-
+                  maps:
+                    - how: dict
+                      name: conference
+                      map:
+                        '@conf_id': id
+                    - type: item
+                      descend_key: conf_titles
+                      maps:
+                        - type: list
+                          descend_key: conf_title
+                          maps:
+                            - how: dict
+                              name: conference_title
+                              map:
+                                '#text': title
+                    - type: item
+                      descend_key: conf_infos
+                      maps:
+                        - type: list
+                          descend_key: conf_info
+                          maps:
+                            - how: dict
+                              name: conference_info
+                              map:
+                                '#text': text
+                    - type: item
+                      descend_key: conf_dates
+                      maps:
+                        - type: list
+                          descend_key: conf_date
+                          maps:
+                            - how: dict
+                              name: date
+                              transforms:
+                                - foo: parse_date_conf
+                                  module: wos_db_studies.utils
+                                  input:
+                                    - '@conf_start'
+                                  output:
+                                    - year
+                                    - month
+                                    - day
+                    - type: item
+                      descend_key: conf_locations
+                      maps:
+                        - type: list
+                          descend_key: conf_location
+                          edges:
+                            - how: all
+                              source:
+                                name: location
+                              target:
+                                name: organization
+                              weight_exclusive:
+                                - anchor
+                          maps:
+                            - how: dict
+                              name: location
+                              __extra:
+                                anchor: conference
+                              map:
+                                conf_city: city
+                                conf_state: state
+                            - how: dict
+                              name: organization
+                              __extra:
+                                anchor: conference
+                              map:
+                                conf_host: name
+                    - type: item
+                      descend_key: sponsors
+                      maps:
+                        - type: list
+                          descend_key: sponsor
+                          maps:
+                            - how: dict
+                              name: conference_sponsor
+                              map:
+                                '#text': name
+        - type: item
+          descend_key: fullrecord_metadata
+          maps:
+            - type: item
+              descend_key: languages
+              maps:
+                - type: list
+                  descend_key: language
+                  maps:
+                    - how: dict
+                      name: language
+                      map:
+                        '#text': name
+                        '@type': type
+            - type: item
+              descend_key: normalized_languages
+              maps:
+                - type: list
+                  descend_key: language
+                  maps:
+                    - how: dict
+                      name: language
+                      map:
+                        '#text': name
+                        '@type': type
+            - type: item
+              descend_key: normalized_doctypes
+              maps:
+                - type: list
+                  descend_key: doctype
+                  maps:
+                    - how: dict
+                      name: document_type
+                      map:
+                        '#text': name
+            - type: item
+              descend_key: references
+              maps:
+                - type: list
+                  descend_key: reference
+                  maps:
+                    - type: item
+                      edges:
+                        - how: all
+                          source:
+                            name: publication
+                          target:
+                            name: date
+                        - how: all
+                          source:
+                            name: contributor
+                          target:
+                            name: publication
+                          values:
+                            reference: true
+                        - how: all
+                          source:
+                            name: publication
+                          target:
+                            name: medium_title
+                      maps:
+                        - how: dict
+                          name: publication
+                          map:
+                            uid: _key
+                            xref_doi: doi
+                            page: first_page
+                            citedTitle: title
+                        - how: dict
+                          name: date
+                        - how: dict
+                          name: medium_title
+                          map:
+                            citedWork: title
+                        - how: dict
+                          descend_key: reference
+                          name: contributor
+                          map:
+                            citedAuthor: wos_standard
+            - type: item
+              descend_key: addresses
+              maps:
+                - type: list
+                  descend_key: address_name
+                  maps:
+                    - type: item
+                      descend_key: address_spec
+                      edges:
+                        - how: all
+                          source:
+                            name: location
+                          target:
+                            name: organization
+                            weight_exclusive:
+                              - pref
+                        - how: all
+                          source:
+                            name: organization
+                          target:
+                            name: suborganization
+                      maps:
+                        - how: dict
+                          name: location
+                          __extra:
+                            anchor: true
+                          map:
+                            '@addr_no': addr_no
+                        - type: item
+                          descend_key: organizations
+                          maps:
+                            - type: list
+                              descend_key: organization
+                              maps:
+                                - how: dict
+                                  name: organization
+                                  map:
+                                    '#text': name
+                                    '@pref': pref
+                        - type: item
+                          descend_key: suborganizations
+                          maps:
+                            - type: list
+                              descend_key: suborganization
+                              maps:
+                                - how: dict
+                                  name: suborganization
+                                  map:
+                                    '#text': name
+            - type: item
+              descend_key: reprint_addresses
+              maps:
+                - type: list
+                  descend_key: address_name
+                  edges:
+                    - how: 1-n
+                      source:
+                        name: contributor
+                        field: addr_no
+                        anchor: reprint
+                        type: list
+                        all_value: 0
+                      target:
+                        name: location
+                        anchor: reprint
+                        field: addr_no
+                        type: value
+                  maps:
+                    - type: item
+                      descend_key: address_spec
+                      edges:
+                        - how: all
+                          source:
+                            name: location
+                          target:
+                            name: organization
+                            weight_exclusive:
+                              - pref
+                        - how: all
+                          source:
+                            name: organization
+                          target:
+                            name: suborganization
+                      maps:
+                        - how: dict
+                          name: location
+                          __extra:
+                            anchor: reprint
+                          map:
+                            '@addr_no': addr_no
+                        - type: item
+                          descend_key: organizations
+                          maps:
+                            - type: list
+                              descend_key: organization
+                              maps:
+                                - how: dict
+                                  name: organization
+                                  map:
+                                    '#text': name
+                                    '@pref': pref
+                        - type: item
+                          descend_key: suborganizations
+                          maps:
+                            - type: list
+                              descend_key: suborganization
+                              maps:
+                                - how: dict
+                                  name: suborganization
+                                  map:
+                                    '#text': name
+                    - type: item
+                      descend_key: names
+                      maps:
+                        - type: list
+                          descend_key: name
+                          maps:
+                            - type: item
+                              maps:
+                                - how: dict
+                                  name: contributor
+                                  __extra:
+                                    anchor: reprint
+                                  map:
+                                    '@seq_no': seq_no
+                                    '@addr_no': addr_no
+                                    '@dais_id': dais_id
+                                    email_addr: email
+            - type: item
+              descend_key: category_info
+              maps:
+                - type: item
+                  descend_key: headings
+                  maps:
+                    - type: list
+                      descend_key: heading
+                      maps:
+                        - how: dict
+                          name: heading
+                          map:
+                            '#text': name
+                - type: item
+                  descend_key: subheadings
+                  maps:
+                    - type: list
+                      descend_key: subheading
+                      maps:
+                        - how: dict
+                          name: subheading
+                          map:
+                            '#text': name
+                - type: item
+                  descend_key: subjects
+                  maps:
+                    - type: list
+                      descend_key: subject
+                      maps:
+                        - how: dict
+                          name: subject
+                          map:
+                            '#text': name
+            - type: item
+              descend_key: fund_ack
+              maps:
+                - type: item
+                  descend_key: fund_text
+                  maps:
+                    - type: list
+                      descend_key: p
+                      maps:
+                        - how: dict
+                          name: funding_text
+                          map:
+                            '#text': text
+                - type: item
+                  descend_key: grants
+                  maps:
+                    - type: list
+                      descend_key: grant
+                      edges:
+                        - how: all
+                          source:
+                            name: agency
+                          target:
+                            name: grant_id
+                      maps:
+                        - how: dict
+                          name: agency
+                          map:
+                            grant_agency: name
+                        - type: item
+                          descend_key: grant_ids
+                          maps:
+                            - type: list
+                              descend_key: grant_id
+                              maps:
+                                - how: dict
+                                  name: grant_id
+                                  map:
+                                    '#text': id
+            - type: item
+              descend_key: keywords
+              maps:
+                - type: list
+                  descend_key: keyword
+                  maps:
+                    - how: dict
+                      name: keyword
+                      map:
+                        '#text': name
+            - type: item
+              descend_key: abstracts
+              maps:
+                - type: list
+                  descend_key: abstract
+                  maps:
+                    - type: item
+                      descend_key: abstract_text
+                      maps:
+                        - type: list
+                          descend_key: p
+                          maps:
+                            - how: dict
+                              name: abstract
+                              map:
+                                '#text': text
+        - type: item
+          descend_key: item
+          maps:
+            - type: item
+              descend_key: ids
+              maps:
+                - how: dict
+                  name: some_id
+                  map:
+                    '#text': id
+            - how: dict
+              name: bib_id
+              map:
+                bib_id: id
+            - type: item
+              descend_key: keywords_plus
+              maps:
+                - type: list
+                  descend_key: keyword_plus
+                  maps:
+                    - how: dict
+                      name: keyword
+                      map:
+                        '#text': name
+    - type: item
+      descend_key: dynamic_data
+      maps:
+        - type: item
+          descend_key: cluster_related
+          maps:
+            - type: item
+              descend_key: identifiers
+              maps:
+                - type: list
+                  descend_key: identifier
+                  maps:
+                    - how: dict
+                      name: medium
+                      filter:
+                        '@type': issn
+                      map:
+                        '@value': issn
+                    - how: dict
+                      name: publication
+                      filter:
+                        '@type': xref_doi
+                      map:
+                        '@value': doi
 vertex_collections:
-    publication:
-        basename: publications
+  publication:
+    basename: publications
+    fields:
+      - _key
+      - volume
+      - issue
+      - title
+      - accession_no
+      - has_abstract
+      - doi
+      - funding_text
+      - art_no
+      - first_page
+      - last_page
+      - page_count
+      - str_pages
+    index:
+      - _key
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - _key
-            - title
-            - volume
-            - issue
-            - accession_no
-            - has_abstract
-            - doi
-            - funding_text
-            - art_no
-            - first_page
-            - last_page
-            - page_count
-            - str_pages
-        index:
-            - _key
-        extra_index:
-            -
-                type: hash
-                unique: false
-                fields:
-                    - title
-    medium:
-        basename: media
+          - title
+  medium:
+    basename: media
+    fields:
+      - issn
+      - isbn
+      - eissn
+      - eisbn
+      - accession_no
+      - meeting_abs
+      - parent_book_doi
+    index:
+      - issn
+      - isbn
+    extra_index:
+      - type: hash
+        unique: false
         fields:
-            - issn
-            - isbn
-            - eissn
-            - eisbn
-            - accession_no
-            - meeting_abs
-            - parent_book_doi
-        index:
-            - issn
-            - isbn
-#            - title
-        extra_index:
-            -
-                type: hash
-                unique: false
-                fields:
-                    - issn
-    medium_title:
-        basename: media_title
+          - issn
+  medium_title:
+    basename: media_title
+    fields:
+      - title
+    index:
+      - title
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - title
-        index:
-            - title
-    language:
-        basename: languages
+          - title
+  language:
+    basename: languages
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - language
-        index:
-            - language
-    role:
-        basename: roles
+          - name
+  contributor:
+    basename: contributors
+    fields:
+      - first_name
+      - last_name
+      - email
+      - display_name
+      - wos_standard
+      - orcid_id
+      - r_id
+      - dais_id
+    index:
+      - first_name
+      - last_name
+      - email
+      - orcid_id
+      - r_id
+      - dais_id
+      - wos_standard
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - "@role"
-        index:
-            - "@role"
-    contributor:
-        basename: contributors
+          - first_name
+          - last_name
+          - display_name
+          - wos_standard
+      - foo: standardize
+        module: wos_db_studies.utils
         fields:
-            - first_name
-            - last_name
-            - email
-            - display_name
-            - wos_standard
-            - orcid_id
-            - r_id
-            - dais_id
-        index:
-            - first_name
-            - last_name
-            - email
-            - orcid_id
-            - r_id
-            - dais_id
-            - wos_standard
-        transforms:
-            -
-                foo: lower
-                class: str
-                fields:
-                  - first_name
-                  - last_name
-                  - display_name
-                  - wos_standard
-            -
-                foo: standardize
-                module: wos_db_studies.utils
-                fields:
-                    - wos_standard
-    location:
-        basename: locations
+          - wos_standard
+  location:
+    basename: locations
+    fields:
+      - country
+      - state
+      - city
+      - street
+      - full_address
+    index:
+      - country
+      - state
+      - city
+    extra_index:
+      - type: hash
+        unique: false
         fields:
-            - country
-            - state
-            - city
-            - zip
-            - street
-            - full_address
-        index:
-            - country
-            - state
-            - city
-            - zip
-        extra_index:
-            -
-                type: hash
-                unique: false
-                fields:
-                    - country
-    organization:
-        basename: organizations
+          - country
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-            - pref
-        index:
-            - name
-    suborganization:
-        basename: suborganizations
+          - country
+          - state
+          - city
+          - street
+          - full_address
+  organization:
+    basename: organizations
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    publication_type:
-        basename: publication_types
+          - name
+  suborganization:
+    basename: suborganizations
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    document_type:
-        basename: document_types
+          - name
+  publication_type:
+    basename: publication_types
+    fields:
+      - type
+    index:
+      - type
+  document_type:
+    basename: document_types
+    fields:
+      - name
+    index:
+      - name
+  subject:
+    basename: subjects
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    subject:
-        basename: subjects
+          - name
+  keyword:
+    basename: keywords
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    keyword:
-        basename: keywords
+          - name
+  edition:
+    basename: editions
+    fields:
+      - name
+    index:
+      - name
+  abstract:
+    basename: abstracts
+    fields:
+      - text
+    index:
+      - text
+  agency:
+    basename: agencies
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    edition:
-        basename: editions
+          - name
+  grant_id:
+    basename: grant_ids
+    fields:
+      - id
+    index:
+      - id
+  heading:
+    basename: headings
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    abstract:
-        basename: abstracts
+          - name
+  subheading:
+    basename: subheadings
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    agency:
-        basename: agencies
+          - name
+  funding_text:
+    basename: funding_texts
+    fields:
+      - text
+    index:
+      - text
+  date:
+    basename: dates
+    fields:
+      - year
+      - month
+      - day
+    index:
+      - year
+      - month
+      - day
+    transforms:
+      - foo: try_int
+        module: wos_db_studies.utils
         fields:
-            - name
-        index:
-            - name
-    grant_id:
-        basename: grant_ids
+          - year
+          - month
+          - day
+  publisher:
+    basename: publishers
+    fields:
+      - display_name
+      - full_name
+    index:
+      - display_name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    heading:
-        basename: headings
+          - display_name
+  conference:
+    basename: conferences
+    fields:
+      - id
+    index:
+      - id
+  conference_title:
+    basename: conference_titles
+    fields:
+      - title
+    index:
+      - title
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    subheading:
-        basename: subheadings
+          - title
+  conference_info:
+    basename: conference_infos
+    fields:
+      - text
+    index:
+      - text
+  conference_sponsor:
+    basename: conference_sponsors
+    fields:
+      - name
+    index:
+      - name
+    transforms:
+      - foo: lower
+        class: str
         fields:
-            - name
-        index:
-            - name
-    funding_text:
-        basename: funding_texts
-        fields:
-            - text
-        index:
-            - text
-    date:
-        basename: dates
-        fields:
-            - year
-            - month
-            - day
-        index:
-            - year
-            - month
-            - day
-        transforms:
-            -   foo: try_int
-                module: wos_db_studies.utils
-                fields:
-                    - year
-#        extra_index:
-#            -   type: hash
-#                unique: false
-#                fields:
-#                    - year
-    publisher:
-        basename: publishers
-        fields:
-            - display_name
-            - full_name
-        index:
-            - display_name
-    conference:
-        basename: conferences
-        fields:
-            - id
-        index:
-            - id
-    conference_title:
-        basename: conference_titles
-        fields:
-            - name
-        index:
-            - name
-    conference_info:
-        basename: conference_infos
-        fields:
-            - name
-        index:
-            - name
-    conference_sponsor:
-        basename: conference_sponsors
-        fields:
-            - name
-        index:
-            - name
-    some_id:
-        basename: some_ids
-        fields:
-            - id
-        index:
-            - id
-    bib_id:
-        basename: bib_ids
-        fields:
-            - id
-        index:
-            - id
-
+          - name
+  some_id:
+    basename: some_ids
+    fields:
+      - id
+    index:
+      - id
+  bib_id:
+    basename: bib_ids
+    fields:
+      - id
+    index:
+      - id
 extra_edges:
-    -
-        source: contributor
-        target: organization
-        by: publication
-        edge_weight:
-            _key: pubid
-            year: year
+  - source: contributor
+    target: organization
+    by: publication
+    edge_weight:
+      _key: pubid
+      year: year

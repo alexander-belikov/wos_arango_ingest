@@ -54,6 +54,7 @@ def try_int(x):
     except:
         return x
 
+
 def delete_collections(sys_db, cnames=[], gnames=[]):
 
     print("collections (non system):")
