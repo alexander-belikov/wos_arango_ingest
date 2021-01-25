@@ -328,6 +328,8 @@ json:
                           maps:
                             - how: dict
                               name: location
+                              map:
+                                "@addr_no": addr_no
                         - type: item
                           descend_key: names
                           maps:

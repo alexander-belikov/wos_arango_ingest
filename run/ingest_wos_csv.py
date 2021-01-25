@@ -7,12 +7,7 @@ from os.path import isfile, join
 import csv
 from itertools import permutations
 from arango import ArangoClient
-from wos_db_studies.utils import (
-    delete_collections,
-    upsert_docs_batch,
-    insert_edges_batch,
-    define_extra_edges,
-)
+from wos_db_studies.util.db import delete_collections, upsert_docs_batch, insert_edges_batch, define_extra_edges
 from wos_db_studies.utils import clear_first_level_nones, update_to_numeric
 from wos_db_studies.chunker import Chunker
 from pprint import pprint

@@ -7,9 +7,11 @@ import gzip
 import json
 from functools import partial
 import multiprocessing as mp
-from pprint import pprint
+import logging
 
 xml_dummy = "#text"
+
+logger = logging.getLogger(__name__)
 
 
 def apply_mapper(mapper, document, vertex_spec):
@@ -41,11 +43,8 @@ def apply_mapper(mapper, document, vertex_spec):
                                 doc_[kk] = vv
                 else:
                     if not isinstance(document, dict):
-                        pprint(mapper)
-                        pprint(document)
-                # for upd in upd_trans:
-                #     doc_.update(upd)
-                # doc_ = {k: (v[xml_dummy] if isinstance(v, dict) else v) for k, v in document.items() if k in kkeys}
+                        logger.warning(mapper)
+                        logger.warning(document)
                 if "map" in mapper:
                     doc_ = {mapper["map"][k] if k in mapper["map"] else k: v for k, v in doc_.items() if v}
                 if "__extra" in mapper:
@@ -143,8 +142,8 @@ def add_weights(mapper, agg):
                     doc = vs[0]
                     flag = all([doc[k] == v for k, v in c.items()])
                     if flag:
-                        for u, v, weight in edges:
-                            weight.update({item["name"]: doc[item["field"]]})
+                        for edoc in edges:
+                            edoc["attributes"].update({item["name"]: doc[item["field"]]})
         agg[(source, target)] = edges
     return agg
 
@@ -192,11 +191,11 @@ def add_edges(mapper, agg, vertex_indices):
                 if "values" in edge_def:
                     weight.update({k: v for k, v in edge_def["values"].items()})
                 agg[(source, target)] += [
-                    (
-                        project_dict(u, source_index),
-                        project_dict(v, target_index),
-                        weight,
-                    )
+                    {
+                        "source": project_dict(u, source_index),
+                        "target": project_dict(v, target_index),
+                        "attributes": weight
+                    }
                 ]
         if edge_def["how"] == "1-n":
             source_field, target_field = (
@@ -229,11 +228,29 @@ def add_edges(mapper, agg, vertex_indices):
                     if source_field in u:
                         pointer = u[source_field]
                         if pointer in target_items.keys():
-                            agg[(source, target)] += [(up, target_items[pointer], weight)]
+                            agg[(source, target)] += [
+                                {
+                                    "source": up,
+                                    "target": target_items[pointer],
+                                    "attributes": weight
+                                }
+                                ]
                         else:
-                            agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
+                            agg[(source, target)] += [
+                                {
+                                    "source": up,
+                                    "target": v,
+                                    "attributes": weight
+                                }
+                               for v in target_items.values()]
                     else:
-                        agg[(source, target)] += [(up, v, weight) for v in target_items.values()]
+                        agg[(source, target)] += [
+                            {
+                                "source": up,
+                                "target": v,
+                                "attributes": weight
+                            }
+                            for v in target_items.values()]
     return agg
 
 
@@ -436,3 +453,5 @@ def foo_parallel(data, kwargs, n=None):
     with mp.Pool(n_proc) as p:
         r = p.map(func, data)
     return r
+
+

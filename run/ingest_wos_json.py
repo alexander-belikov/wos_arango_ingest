@@ -4,21 +4,25 @@ import yaml
 from os.path import join, expanduser
 from os import listdir
 from os.path import isfile, join
-from arango import ArangoClient
-from wos_db_studies.utils import (
-    delete_collections,
-    upsert_docs_batch,
-    insert_edges_batch,
-    define_extra_edges,
-)
-from wos_db_studies.utils import clear_first_level_nones, update_to_numeric
-from pprint import pprint
 import gzip
 import json
-from wos_parser.chunkflusher import FPSmart
+from wos_db_studies.util.db import (
+    delete_collections,
+    define_collections,
+    upsert_docs_batch,
+    insert_edges_batch,
+    get_arangodb_client,
+    define_extra_edges
+)
+from wos_db_studies.utils import clear_first_level_nones, update_to_numeric, merge_doc_basis
+from wos_db_studies.util.pjson import parse_config
+from wos_db_studies.utils_json import process_document_top, parse_edges
 import pathos.multiprocessing as mp
 from functools import partial
-from wos_db_studies.utils_json import apply_mapper
+from collections import defaultdict
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def is_int(x):
@@ -41,389 +45,145 @@ def main(
     keyword="DSSHPSH",
     clean_start="all",
     prefix="toy_",
-    config=None,
-    verbose=True,
+    config=None
 ):
-    # vertex_type -> vertex_collection_name
-    vmap = {
-        k: f'{prefix}{v["basename"]}' for k, v in config["vertex_collections"].items()
-    }
+    sys_db = get_arangodb_client(protocol,
+                                 ip_addr,
+                                 port,
+                                 database,
+                                 cred_name,
+                                 cred_pass)
 
-    # vertex_collection_name -> field_definition
-    index_fields_dict = {
-        vmap[k]: v["index"] for k, v in config["vertex_collections"].items()
-    }
+    vcollections, vmap, graphs, index_fields_dict, eindex = parse_config(config=config_,
+                                                                         prefix=args.prefix)
 
-    # vertex_collection_name -> extra_index
-    # in addition to index from field_definition
-    extra_indices = {
-        vmap[k]: v["extra_index"]
-        for k, v in config["vertex_collections"].items()
-        if "extra_index" in v
-    }
+    edge_des, excl_fields = parse_edges(config["json"], [], defaultdict(list))
+    # all_fields_dict = {
+    #     k: v["fields"] for k, v in config["vertex_collections"].items()
+    # }
 
-    # vertex_collection_name -> fields_keep
-    retrieve_fields_dict = {
-        vmap[k]: v["fields"] for k, v in config["vertex_collections"].items()
-    }
+    # if clean_start == "all":
+    #     delete_collections(sys_db, vcollections + ecollections, actual_graphs)
+    # elif clean_start == "edges":
+    #     delete_collections(sys_db, ecollections, [])
+    delete_collections(sys_db, [], [], delete_all=True)
 
-    # vertex_collection_name -> fields_type
-    numeric_fields_dict = {
-        vmap[k]: v["numeric_fields"]
-        for k, v in config["vertex_collections"].items()
-        if "numeric_fields" in v
-    }
+    define_collections(sys_db, graphs, vmap, index_fields_dict, eindex)
 
-    #############################
-    # edge discovery
-
-    field_maps = {}
-    # for item in config["table"]:
-    #     field_maps[item["filetype"]] = {
-    #         vmap[vc["type"]]: vc["map_fields"]
-    #         for vc in item["vertex_collections"]
-    #         if "map_fields" in vc
-    #     }
-
-    # acc = []
-    # for n in config["table"]:
-    #     for pa, pb in permutations(n["vertex_collections"], 2):
-    #         pa_map = pa["map_fields"] if "map_fields" in pa else {}
-    #         pb_map = pb["map_fields"] if "map_fields" in pb else {}
-    #         item = (pa["type"], pb["type"], pa_map, pb_map, n["filetype"])
-    #         acc += [item]
-
-    # [(vcol_a, vcol_b, map_table_vcol_a, map_table_vcol_b)]
-    # edges_def = []
-    # requested_edge_collections = config["edge_collections"].copy()
-    # for item in acc:
-    #     a, b, _, _, _ = item
-    #     if [a, b] in requested_edge_collections:
-    #         edges_def += [(vmap[a], vmap[b], *item[2:])]
-    #         requested_edge_collections.remove([a, b])
-    # edges_def = sorted(edges_def)
-
-    extra_edges = config["extra_edges"]
-
-    graph = {}
-    # modes2graphs = {}
-    for uv in edges_def:
-        u, v, udict, vdict, table_source = uv
-        graph_name = f"{u}_{v}_graph"
-        ecollection_name = f"{u}_{v}_edges"
-
-        graph[graph_name] = {
-            "source": u,
-            "target": v,
-            "edge_name": ecollection_name,
-            "source_map": udict,
-            "target_map": vdict,
-            "type": "direct",
-        }
-
-        # if table_source in modes2graphs:
-        #     modes2graphs[table_source] += [graph_name]
-        # else:
-        #     modes2graphs[table_source] = [graph_name]
-
-    for item in extra_edges:
-        u, v = vmap[item["source"]], vmap[item["target"]]
-        graph_name = f"{u}_{v}_graph"
-        ecollection_name = f"{u}_{v}_edges"
-        graph[graph_name] = {
-            "source": u,
-            "target": v,
-            "edge_name": ecollection_name,
-            "by": vmap[item["by"]],
-            "edge_weight": item["edge_weight"],
-            "type": "indirect",
-        }
-
-    actual_graphs = []
-    # actual_graphs = [g for item in modes2graphs.values() for g in item]
-
-
-    vcollections = []
-    # vcollections = list(
-    #     set([graph[g]["source"] for g in actual_graphs])
-    #     | set([graph[g]["target"] for g in actual_graphs])
-    # )
-
-    ecollections = []
-    # ecollections = list(set([graph[g]["edge_name"] for g in actual_graphs]))
-
-    if verbose:
-        pprint(graph)
-
-
-    files = sorted(
-        [f for f in listdir(fpath) if isfile(join(fpath, f)) and keyword in f]
-    )
-
-    if limit_files:
-        files = files[:limit_files]
-
-    pprint(files)
-
-    hosts = f"{protocol}://{ip_addr}:{port}"
-    client = ArangoClient(hosts=hosts)
-
-    sys_db = client.db(database, username=cred_name, password=cred_pass)
-
-    if verbose:
-        print(f"clean start {clean_start}")
-    if clean_start == "all":
-        delete_collections(sys_db, vcollections + ecollections, actual_graphs)
-    elif clean_start == "edges":
-        delete_collections(sys_db, ecollections, [])
-
-    if clean_start == "edges":
-        for gname in actual_graphs:
-            vcol_from, vcol_to, edge_col = (
-                graph[gname]["source"],
-                graph[gname]["target"],
-                graph[gname]["edge_name"],
-            )
-            if verbose:
-                print("********************")
-                print(vcol_from, vcol_to, edge_col)
-            if sys_db.has_graph(gname):
-                g = sys_db.graph(gname)
-            else:
-                g = sys_db.create_graph(gname)
-            _ = g.create_edge_definition(
-                edge_collection=edge_col,
-                from_vertex_collections=[vcol_from],
-                to_vertex_collections=[vcol_to],
-            )
-
-    if clean_start == "all":
-        for gname in actual_graphs:
-            vcol_from, vcol_to, edge_col = (
-                graph[gname]["source"],
-                graph[gname]["target"],
-                graph[gname]["edge_name"],
-            )
-            if verbose:
-                print("********************")
-                print(vcol_from, vcol_to, edge_col)
-            if sys_db.has_graph(gname):
-                g = sys_db.graph(gname)
-            else:
-                g = sys_db.create_graph(gname)
-            if not sys_db.has_collection(vcol_to):
-                _ = g.create_vertex_collection(vcol_to)
-                general_collection = sys_db.collection(vcol_to)
-                index_fields = index_fields_dict[vcol_to]
-                ih = general_collection.add_hash_index(fields=index_fields, unique=True)
-            if not sys_db.has_collection(vcol_from):
-                _ = g.create_vertex_collection(vcol_from)
-                general_collection = sys_db.collection(vcol_from)
-                index_fields = index_fields_dict[vcol_from]
-                ih = general_collection.add_hash_index(fields=index_fields, unique=True)
-
-            _ = g.create_edge_definition(
-                edge_collection=edge_col,
-                from_vertex_collections=[vcol_from],
-                to_vertex_collections=[vcol_to],
-            )
-
-        # add secondary indices:
-        for cname, list_indices in extra_indices.items():
-            for index_dict in list_indices:
-                general_collection = sys_db.collection(cname)
-                ih = general_collection.add_hash_index(
-                    fields=index_dict["fields"], unique=index_dict["unique"]
-                )
-
-    print([c["name"] for c in sys_db.collections() if c["name"][0] != "_"])
-    seconds_start0 = time.time()
-
-    pattern = None
+    files = [f for f in listdir(fpath) if isfile(join(fpath, f)) and keyword in f]
 
     for filename in files:
-        seconds_start_file = time.time()
-        if filename[-2:] == "gz":
-            open_foo = gzip.GzipFile
-        elif filename[-3:] == "xml":
-            open_foo = open
-        else:
-            raise ValueError("Unknown file type")
-        with open_foo(filename, 'rb') as fp:
-            if pattern:
-                fps = FPSmart(fp, pattern)
-            else:
-                fps = fp
+        with gzip.GzipFile(join(fpath, filename), 'rb') as fp:
+            fps = fp
             data = json.load(fps)
 
-        # parallelize
-        func = partial(apply_mapper, config["json"])
-        n_proc = 4
-        with mp.Pool(n_proc) as p:
-            fname_merge = p.map(func, data)
+        seconds0 = time.time()
 
-        for g in modes2graphs[mode]:
-            if graph[g]["type"] != "direct":
-                pass
+        # kwargs = {"config": config["json"],
+        #           "vertex_config": config["vertex_collections"],
+        #           "edge_fields": excl_fields,
+        #           "merge_collections": ["publication"]
+        #           }
+        # func = partial(process_document_top, **kwargs)
+        # n_proc = 4
+        # with mp.Pool(n_proc) as p:
+        #     rtot = p.map(func, data)
 
-            vfrom, vto, ecol = (
-                graph[g]["source"],
-                graph[g]["target"],
-                graph[g]["edge_name"],
-            )
-            vfrom_dict, vto_dict = (
-                graph[g]["source_map"],
-                graph[g]["target_map"],
-            )
+        rtot = defaultdict(list)
+        for j, item in enumerate(data):
+            r0 = process_document_top(item, config["json"],
+                                      config["vertex_collections"],
+                                      excl_fields, ["publication"]
+                                      )
+            #     print(j, r0["publication"][0]["_key"])
+            for k, v in r0.items():
+                rtot[k].extend(v)
 
-            seconds0 = time.time()
-            if verbose:
-                print("vfrom_dict")
-                print(vfrom_dict)
+        seconds1 = time.time()
+        logger.info(
+            f"parsed {len(data)} items; {seconds1 - seconds0:.1f} sec"
+        )
 
-            vfrom_header_dict = {
-                (vfrom_dict[k] if k in vfrom_dict else k): v
-                for k, v in header_dict.items()
-            }
+        kkey_vertex = sorted([k for k in rtot.keys() if isinstance(k, str)])
+        kkey_edge = sorted([k for k in rtot.keys() if isinstance(k, tuple)])
 
-            if verbose:
-                print("vfrom_header_dict")
-                print(vfrom_header_dict)
-
-            retrieve_fields_dict_from = [
-                f
-                for f in retrieve_fields_dict[vfrom]
-                if f in vfrom_header_dict
-            ]
-            if verbose:
-                print("retrieve_fields_dict_from")
-                print(retrieve_fields_dict_from)
-
-            from_list = [
-                {
-                    f: item[vfrom_header_dict[f]]
-                    for f in retrieve_fields_dict_from
-                }
-                for item in lines2
-            ]
-
-            from_list = clear_first_level_nones(
-                from_list, index_fields_dict[vfrom]
-            )
-
-            # unique on index_fields_dict[vfrom]
-            from_set = [
-                dict(y) for y in set(tuple(x.items()) for x in from_list)
-            ]
+        cnt = 0
+        for k in kkey_vertex:
+            v = rtot[k]
+            r = merge_doc_basis(rtot[k], index_fields_dict[k])
+            cnt += len(r)
+            #         print(k, vmap[k], index_fields_dict[k], len(rtot[k]), len(r))
             query0 = upsert_docs_batch(
-                from_set, vfrom, index_fields_dict[vfrom], "doc", True
+                v, vmap[k], index_fields_dict[k], "doc", False
             )
             cursor = sys_db.aql.execute(query0)
 
-            if verbose:
-                print("vto_dict")
-                print(vto_dict)
+        seconds2 = time.time()
+        logger.info(
+            f"ingested {cnt} vertices; {seconds2 - seconds1:.1f} sec"
+        )
 
-            vto_header_dict = {
-                (vto_dict[k] if k in vto_dict else k): v
-                for k, v in header_dict.items()
-            }
+        cnt = 0
 
-            if verbose:
-                print("vto_header_dict")
-                print(vto_header_dict)
-
-            retrieve_fields_dict_to = [
-                f for f in retrieve_fields_dict[vto] if f in vto_header_dict
-            ]
-            if verbose:
-                print("retrieve_fields_dict_to")
-                print(retrieve_fields_dict_to)
-
-            to_list = [
-                {
-                    f: item[vto_header_dict[f]]
-                    for f in retrieve_fields_dict_to
-                }
-                for item in lines2
-            ]
-
-            to_list = clear_first_level_nones(
-                to_list, index_fields_dict[vto]
-            )
-            # unique on index_fields_dict[vfrom]
-            to_set = [
-                dict(y) for y in set(tuple(x.items()) for x in to_list)
-            ]
-
-            query0 = upsert_docs_batch(
-                to_set, vto, index_fields_dict[vto], "doc", True
-            )
-            # print(query0)
-            cursor = sys_db.aql.execute(query0)
-
-            seconds2 = time.time()
-            if verbose:
-                print(
-                    f"ingested {len(from_set) + len(to_set)} nodes; {seconds2 - seconds0:.1f} sec"
-                )
-
-            edges_ = [
-                {"source": x, "target": y}
-                for x, y in zip(from_list, to_list)
-            ]
-            if verbose:
-                print(index_fields_dict[vfrom])
-                print(index_fields_dict[vto])
+        for uv in kkey_edge:
+            u, v = uv
+            cnt += len(rtot[uv])
             query0 = insert_edges_batch(
-                edges_,
-                vfrom,
-                vto,
-                ecol,
-                index_fields_dict[vfrom],
-                index_fields_dict[vto],
+                rtot[uv],
+                vmap[u],
+                vmap[v],
+                graphs[uv]["edge_name"],
+                index_fields_dict[u],
+                index_fields_dict[v],
                 False,
             )
+
             cursor = sys_db.aql.execute(query0)
 
-            seconds3 = time.time()
-            if verbose:
-                print(
-                    f"ingested {len(edges_)} edges; {seconds3 - seconds2:.1f} sec"
-                )
-            print(
-                f"ingest file {filename} took {(seconds3 - seconds_start_file) :.1f} sec"
-            )
-    seconds_end0 = time.time()
-    print(f"full ingest took {(seconds_end0 - seconds_start0) :.1f} sec")
+        seconds3 = time.time()
+        logger.info(
+            f"ingested {cnt} edges; {seconds3 - seconds2:.1f} sec"
+        )
 
-    print(f"updating some fields to numeric...")
-    seconds_start0 = time.time()
+        # for filename in files:
+        #     seconds_start_file = time.time()
+        #     if filename[-2:] == "gz":
+        #         open_foo = gzip.GzipFile
+        #     elif filename[-3:] == "xml":
+        #         open_foo = open
+        #     else:
+        #         raise ValueError("Unknown file type")
+        #     with open_foo(filename, 'rb') as fp:
+        #         if pattern:
+        #             fps = FPSmart(fp, pattern)
+        #         else:
+        #             fps = fp
+        #         data = json.load(fps)
+        #
+        #     # parallelize
+        #     func = partial(apply_mapper, config["json"])
+        #     n_proc = 4
+        #     with mp.Pool(n_proc) as p:
+        #         fname_merge = p.map(func, data)
 
-    for cname, fields in numeric_fields_dict.items():
-        for field in fields:
-            query0 = update_to_numeric(cname, field)
-            cursor = sys_db.aql.execute(query0)
-    seconds_end0 = time.time()
-    print(f"updating some fields to numeric {(seconds_end0 - seconds_start0) :.1f} sec")
 
-    print(f"defining edges for extra graphs...")
-    seconds_start0 = time.time()
+    # for cname, fields in numeric_fields_dict.items():
+    #     for field in fields:
+    #         query0 = update_to_numeric(cname, field)
+    #         cursor = sys_db.aql.execute(query0)
 
     # create edge u -> v from u->w, v->w edges
     # find edge_cols uw and vw
-    for gname, item in graph.items():
-        if item["type"] == "indirect":
-            query0 = define_extra_edges(item)
-            cursor = sys_db.aql.execute(query0)
-    seconds_end0 = time.time()
-    print(f"defined edges for extra graphs {(seconds_end0 - seconds_start0) :.4f} sec")
+    # for uv, item in graphs.items():
+    #     if item["type"] == "indirect":
+    #         query0 = define_extra_edges(item)
+    #         cursor = sys_db.aql.execute(query0)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-d", "--datapath", default=expanduser("../data/toy"), help="Path to data files"
+        "-d", "--datapath", default=expanduser("../data/toy"), help="path to data files"
     )
 
     parser.add_argument(
@@ -464,32 +224,16 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-m",
-        "--max-lines",
-        default=None,
-        type=str,
-        help="max lines per file to use for ingestion",
-    )
-
-    parser.add_argument(
-        "-v", "--verbose", default=False, type=bool, help="verbosity level"
-    )
-
-    parser.add_argument(
         "-b",
         "--batch-size",
-        default=500000,
+        default=5000,
         type=int,
-        help="number of symbols read from (archived) file for a single batch",
+        help="number of docs in the batch pushed to db",
     )
+
+    parser.add_argument("--keyword", default="DSSHPSH", help="prefix for files to be processed")
 
     parser.add_argument("--prefix", default="toy_", help="prefix for collection names")
-
-    parser.add_argument(
-        "--modes",
-        nargs="*",
-        default=["publications", "contributors", "institutions", "refs"],
-    )
 
     parser.add_argument(
         "--clean-start",
@@ -499,59 +243,40 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--config-path", type=str, default="../conf/wos.yaml", help="",
+        "--config-path", type=str, default="../conf/wos_json_simple.yaml", help="",
     )
 
     args = parser.parse_args()
 
     if is_int(args.limit_files):
-        limit_files = int(args.limit_files)
+        limit_files_ = int(args.limit_files)
     else:
-        limit_files = None
+        limit_files_ = None
 
-    if is_int(args.max_lines):
-        max_lines = int(args.max_lines)
-    else:
-        max_lines = None
-
-    fpath = args.datapath
-
-    id_addr = args.id_addr
-    protocol = args.protocol
-    port = args.port
-    database = args.db
-    cred_name = args.login_name
-    cred_pass = args.login_password
-
-    verbose = args.verbose
     batch_size = args.batch_size
-    modes = args.modes
     clean_start = args.clean_start
 
     prefix = args.prefix
 
     with open(args.config_path, "r") as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
+        config_ = yaml.load(f, Loader=yaml.FullLoader)
 
-    if verbose:
-        print(f"max_lines : {max_lines}; limit_files: {limit_files}")
-        print(f"modes: {modes}")
-        print(f"clean start: {clean_start}")
+    logger.info(f"limit_files: {limit_files_}")
+    logger.info(f"clean start: {clean_start}")
+
+    logging.basicConfig(filename='ingest_json.log', level=logging.INFO)
 
     main(
-        fpath,
-        protocol,
-        id_addr,
-        port,
-        database,
-        cred_name,
-        cred_pass,
-        limit_files,
-        max_lines,
-        batch_size,
-        modes,
+        expanduser(args.datapath),
+        args.protocol,
+        args.id_addr,
+        args.port,
+        args.db,
+        args.login_name,
+        args.login_password,
+        limit_files_,
+        args.keyword,
         clean_start,
-        prefix,
-        config,
-        verbose,
+        prefix=prefix,
+        config=config_,
     )
