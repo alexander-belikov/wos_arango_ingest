@@ -44,7 +44,7 @@ def main(
     limit_files=None,
     keyword="DSSHPSH",
     clean_start="all",
-    prefix="toy_",
+    prefix="toy",
     config=None
 ):
     sys_db = get_arangodb_client(protocol,
@@ -55,7 +55,7 @@ def main(
                                  cred_pass)
 
     vcollections, vmap, graphs, index_fields_dict, eindex = parse_config(config=config_,
-                                                                         prefix=args.prefix)
+                                                                         prefix=prefix)
 
     edge_des, excl_fields = parse_edges(config["json"], [], defaultdict(list))
     # all_fields_dict = {
@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--keyword", default="DSSHPSH", help="prefix for files to be processed")
 
-    parser.add_argument("--prefix", default="toy_", help="prefix for collection names")
+    parser.add_argument("--prefix", default="toy", help="prefix for collection names")
 
     parser.add_argument(
         "--clean-start",
@@ -256,8 +256,6 @@ if __name__ == "__main__":
     batch_size = args.batch_size
     clean_start = args.clean_start
 
-    prefix = args.prefix
-
     with open(args.config_path, "r") as f:
         config_ = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -277,6 +275,6 @@ if __name__ == "__main__":
         limit_files_,
         args.keyword,
         clean_start,
-        prefix=prefix,
+        prefix=args.prefix,
         config=config_,
     )
