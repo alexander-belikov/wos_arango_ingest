@@ -9,7 +9,7 @@ json:
       vertex:
         - name: publication
           condition:
-            anchor: true
+            anchor: main
           field: _key
     - source:
         name: contributor
@@ -18,7 +18,7 @@ json:
       vertex:
         - name: publication
           condition:
-            anchor: true
+            anchor: main
           field: _key
     - source:
         name: publisher
@@ -27,72 +27,72 @@ json:
       vertex:
         - name: publication
           condition:
-            anchor: true
+            anchor: main
           field: _key
   edges:
     - how: all
       source:
         name: contributor
-        anchor: true
+        anchor: main
         weight_exclusive:
           - seq_no
           - role
       target:
         name: publication
-        anchor: true
+        anchor: main
         fields:
           - anchor
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: conference
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
         fields:
           - anchor
       target:
         name: date
-        anchor: true
+        anchor: main
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
         fields:
           - anchor
       target:
         name: medium_title
-        anchor: true
+        anchor: main
     - how: all
       source:
         name: publisher
-        anchor: true
+        anchor: main
         weight_exclusive:
           - seq_no
       target:
         name: publication
-        anchor: true
+        anchor: main
         fields:
           - anchor
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: publication_type
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: document_type
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: language
         weight_exclusive:
@@ -100,37 +100,37 @@ json:
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: bib_id
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: heading
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: subheading
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: subject
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: some_id
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: medium
     - how: all
@@ -138,67 +138,67 @@ json:
         name: medium
       target:
         name: medium_title
-        anchor: true
+        anchor: main
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: publication
-        anchor: false
+        anchor: reference
     - how: 1-n
       source:
         name: contributor
         field: addr_no
-        anchor: true
+        anchor: main
         type: list
         all_value: 0
       target:
         name: location
         field: addr_no
-        anchor: true
+        anchor: main
         type: value
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: agency
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: grant_id
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: funding_text
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: keyword
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: abstract
     - how: all
       source:
         name: publication
-        anchor: true
+        anchor: main
       target:
         name: edition
   maps:
     - how: dict
       name: publication
       __extra:
-        anchor: true
+        anchor: main
       map:
         UID: _key
     - type: item
@@ -223,7 +223,7 @@ json:
                 - how: dict
                   name: publication
                   __extra:
-                    anchor: true
+                    anchor: main
                   map:
                     '@has_abstract': has_abstract
                     '@vol': volume
@@ -232,7 +232,7 @@ json:
                 - how: dict
                   name: date
                   __extra:
-                    anchor: true
+                    anchor: main
                   transforms:
                     - foo: parse_date_standard
                       module: wos_db_studies.utils
@@ -252,7 +252,7 @@ json:
                     - how: dict
                       name: publication
                       __extra:
-                        anchor: true
+                        anchor: main
                       map:
                         '@begin': first_page
                         '@end': last_page
@@ -273,7 +273,7 @@ json:
                     - how: dict
                       name: medium_title
                       __extra:
-                        anchor: true
+                        anchor: main
                       unfilter:
                         '@type': item
                       map:
@@ -289,7 +289,7 @@ json:
                         - how: dict
                           name: contributor
                           __extra:
-                            anchor: true
+                            anchor: main
                           map:
                             '@seq_no': seq_no
                             '@addr_no': addr_no
@@ -339,7 +339,7 @@ json:
                                 - how: dict
                                   name: publisher
                                   __extra:
-                                    anchor: true
+                                    anchor: main
                                   map:
                                     '@seq_no': seq_no
                                     '@role': role
@@ -516,11 +516,14 @@ json:
                       maps:
                         - how: dict
                           name: publication
+                          __extra:
+                            anchor: reference
                           map:
                             uid: _key
                             xref_doi: doi
                             page: first_page
                             citedTitle: title
+
                         - how: dict
                           name: date
                         - how: dict
@@ -557,7 +560,7 @@ json:
                         - how: dict
                           name: location
                           __extra:
-                            anchor: true
+                            anchor: main
                           map:
                             '@addr_no': addr_no
                         - type: item

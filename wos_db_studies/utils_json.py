@@ -43,8 +43,9 @@ def apply_mapper(mapper, document, vertex_spec):
                                 doc_[kk] = vv
                 else:
                     if not isinstance(document, dict):
-                        logger.warning(mapper)
-                        logger.warning(document)
+                        # logger.warning(mapper)
+                        # logger.warning(document)
+                        pass
                 if "map" in mapper:
                     doc_ = {mapper["map"][k] if k in mapper["map"] else k: v for k, v in doc_.items() if v}
                 if "__extra" in mapper:
@@ -155,6 +156,7 @@ def add_edges(mapper, agg, vertex_indices):
             edge_def["source"]["name"],
             edge_def["target"]["name"],
         )
+
         # get source and target edge fields
         source_index, target_index = vertex_indices[source]["index"], vertex_indices[target]["index"]
 
@@ -162,12 +164,14 @@ def add_edges(mapper, agg, vertex_indices):
         source_items, target_items = agg[source], agg[target]
 
         if edge_def["how"] == "all":
+
             source_items = pick_indexed_items_anchor_logic(source_items,
                                                            source_index,
                                                            edge_def["source"])
             target_items = pick_indexed_items_anchor_logic(target_items,
                                                            target_index,
                                                            edge_def["target"])
+
             for u, v in product(source_items, target_items):
                 weight = dict()
                 if "fields" in edge_def["source"]:
@@ -265,7 +269,7 @@ def pick_indexed_items_anchor_logic(items, indices, set_spec,
     :return:
     """
 
-    # pick item that have any index field present
+    # pick items that have any index field present
 
     items_ = [
         item for item in items if any([k in item for k in indices])
