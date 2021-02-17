@@ -59,6 +59,7 @@ def process_units(units, tmp_dir, config,
                   db,
                   login_name,
                   login_password,
+                  prefix,
                   init_collections,
                   dry
                   ):
@@ -76,7 +77,7 @@ def process_units(units, tmp_dir, config,
                                   login_name,
                                   login_password,
                                   keyword="json",
-                                  clean_start="all" if j == 0 and init_collections else None, prefix="toy",
+                                  clean_start="all" if j == 0 and init_collections else None, prefix=prefix,
                                   dry=dry
                                   )
 
@@ -157,6 +158,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--dry', action='store_true')
 
+    parser.add_argument("--prefix", default="toy_", help="prefix for collection names")
+
     parser.add_argument('--init-collections', action='store_true')
 
     args = parser.parse_args()
@@ -170,7 +173,7 @@ if __name__ == "__main__":
     working_path = expanduser(args.path)
     units = fetch_proper_filenames(working_path, args.maxyears, args.maxunits)
 
-    tmp_path = join(args.path, "tmp_" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)))
+    tmp_path = join("/tmp", "tmp_" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)))
     create_tmp(tmp_path)
     process_units(units, tmp_path, config_,
                   args.protocol,
@@ -179,6 +182,7 @@ if __name__ == "__main__":
                   args.db,
                   args.login_name,
                   args.login_password,
+                  args.prefix,
                   args.init_collections,
                   args.dry
                   )

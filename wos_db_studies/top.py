@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def ingest_json_files(fpath, config, protocol="http", ip_addr="127.0.0.1", port=8529, database="_system",
                       cred_name="root", cred_pass="123",
-                      keyword="DSSHPSH", clean_start="all", prefix="toy", dry=False):
+                      keyword="DSSHPSH", clean_start="all", prefix="toy_", dry=False):
     sys_db = get_arangodb_client(protocol,
                                  ip_addr,
                                  port,

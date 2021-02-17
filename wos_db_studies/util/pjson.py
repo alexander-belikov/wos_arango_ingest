@@ -4,7 +4,7 @@ from wos_db_studies.utils_json import parse_edges
 
 def parse_config(
         config=None,
-        prefix="toy"
+        prefix="toy_"
 ):
     """
     only parse_edges depends on json
@@ -15,7 +15,7 @@ def parse_config(
     """
     # vertex_type -> vertex_collection_name
     vmap = {
-        k: f'{prefix}_{v["basename"]}' for k, v in config["vertex_collections"].items()
+        k: f'{prefix}{v["basename"]}' for k, v in config["vertex_collections"].items()
     }
 
     # vertex_collection_name -> field_definition
