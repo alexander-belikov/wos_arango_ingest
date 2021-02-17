@@ -4,6 +4,8 @@ import argparse
 import logging
 import zipfile
 import yaml
+import random
+import string
 
 from pathlib import Path
 from wos_parser.aux import convert
@@ -57,6 +59,7 @@ def process_units(units, tmp_dir, config,
                   db,
                   login_name,
                   login_password,
+                  init_collections,
                   dry
                   ):
     with timer.Timer() as t_full:
@@ -72,7 +75,8 @@ def process_units(units, tmp_dir, config,
                                   db,
                                   login_name,
                                   login_password,
-                                  keyword="json", clean_start="all" if j == 0 else None, prefix="toy",
+                                  keyword="json",
+                                  clean_start="all" if j == 0 and init_collections else None, prefix="toy",
                                   dry=dry
                                   )
 
@@ -153,8 +157,12 @@ if __name__ == "__main__":
 
     parser.add_argument('--dry', action='store_true')
 
+    parser.add_argument('--init-collections', action='store_true')
+
     args = parser.parse_args()
-    logger.info(f"max years : {args.maxyears} |  max total units : {args.maxunits}")
+
+    logger.info(f" Initialize collections : {args.init_collections}; dry ingestion:  {args.dry} ")
+    logger.info(f" max years : {args.maxyears} |  max total units : {args.maxunits}")
 
     with open(args.config_path, "r") as f:
         config_ = yaml.load(f, Loader=yaml.FullLoader)
@@ -162,7 +170,7 @@ if __name__ == "__main__":
     working_path = expanduser(args.path)
     units = fetch_proper_filenames(working_path, args.maxyears, args.maxunits)
 
-    tmp_path = join(args.path, "tmp")
+    tmp_path = join(args.path, "tmp_" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)))
     create_tmp(tmp_path)
     process_units(units, tmp_path, config_,
                   args.protocol,
@@ -171,6 +179,7 @@ if __name__ == "__main__":
                   args.db,
                   args.login_name,
                   args.login_password,
+                  args.init_collections,
                   args.dry
                   )
 

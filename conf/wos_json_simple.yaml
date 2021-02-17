@@ -523,9 +523,16 @@ json:
                             xref_doi: doi
                             page: first_page
                             citedTitle: title
-
-                        - how: dict
-                          name: date
+                        - type: item
+                          descend_key: year
+                          maps:
+                            - how: dict
+                              name: date
+                              transforms:
+                                -   foo: parse_date_reference
+                                    module: wos_db_studies.utils
+                                    input:
+                                      - "#text"
                         - how: dict
                           name: medium_title
                           map:

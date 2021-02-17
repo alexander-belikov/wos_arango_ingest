@@ -11,6 +11,8 @@ pub_col_aux = "publications_aux"
 pub_col = "publications"
 cite_col = "cites"
 
+day_endings = ["st", "nd", "rd", "th"]
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,6 +38,55 @@ def parse_date_conf(input_str):
     dt = datetime.strptime(input_str, "%Y%m%d")
     year, month, day = dt.year, dt.month, dt.day
     return year, month, day
+
+
+def parse_date_reference(input_str):
+    """
+    examples:
+
+    "year" : "1923, May 10"
+    "year" : "1923, July"
+    "year" : "1921, Sept"
+    "year" : "1935-36"
+    "year" : "1926, December 24th"
+    "year" : "1923, May 10"
+    "year" : "undated"
+    :param input_str:
+    :return:
+    """
+    if "," in input_str:
+        if len(input_str.split(" ")) == 3:
+            if input_str[-2:] in day_endings:
+                input_str = input_str[:-2]
+            try:
+                dt = datetime.strptime(input_str, "%Y, %B %d")
+                return {"year": dt.year, "month": dt.month, "day": dt.day}
+            except:
+                try:
+                    aux = input_str.split(" ")
+                    input_str = " ".join([aux[0]] + [aux[1][:3]] + [aux[2]])
+                    dt = datetime.strptime(input_str, "%Y, %b %d")
+                    return {"year": dt.year, "month": dt.month, "day": dt.day}
+                except:
+                    return {"year": input_str}
+        else:
+            try:
+                dt = datetime.strptime(input_str, "%Y, %B")
+                return {"year": dt.year, "month": dt.month}
+            except:
+                try:
+                    aux = input_str.split(" ")
+                    input_str = " ".join([aux[0]] + [aux[1][:3]])
+                    dt = datetime.strptime(input_str, "%Y, %b")
+                    return {"year": dt.year, "month": dt.month}
+                except:
+                    return {"year": input_str}
+    else:
+        try:
+            dt = datetime.strptime(input_str[:4], "%Y")
+            return {"year": dt.year}
+        except:
+            return {"year": input_str}
 
 
 # def parse_conf_date_text(input_str):
